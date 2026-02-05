@@ -111,5 +111,4 @@ func extractString(image map[string]events.DynamoDBAttributeValue, key string) s
 
 func main() {
 	lambda.Start(handler)
-}ogger.InitLogger()
-	l
+}
