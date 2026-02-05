@@ -29,9 +29,14 @@ module "compute" {
   dynamodb_table_id         = module.database.table_id
   dynamodb_table_stream_arn = module.database.table_stream_arn
   user_pool_arn             = module.auth.user_pool_arn
+  
+  # Configuration
+  allowed_email_domains     = var.allowed_email_domains
+}
   user_pool_id              = module.auth.user_pool_id
   user_pool_client_id       = module.auth.user_pool_client_id
   region                    = var.region
+  allowed_email_domains     = var.allowed_email_domains
 
   # Point to the Go Source Code relative to the module
   # We pass the absolute path to be safe

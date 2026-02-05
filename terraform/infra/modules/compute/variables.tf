@@ -52,3 +52,7 @@ variable "region" {
   description = "AWS Region"
   type        = string
 }
+variable "allowed_email_domains" {
+  description = "Allowed email domains for user sign-up."
+  type        = list(string)
+}

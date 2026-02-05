@@ -18,7 +18,6 @@ type NotificationPayload struct {
 }
 
 func handler(ctx context.Context, event events.DynamoDBEvent) error {
-	log := logger.InitLogger()
 	slog.Info("Processing Dynamodb Stream", "count", len(event.Records))
 
 	for _, record := range event.Records {
@@ -112,4 +111,5 @@ func extractString(image map[string]events.DynamoDBAttributeValue, key string) s
 
 func main() {
 	lambda.Start(handler)
-}
+}ogger.InitLogger()
+	l

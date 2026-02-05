@@ -3,15 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-)
-
-const (
-	DomainAmalitech = "amalitech.com"
-	DomainTraining  = "amalitechtraining.org"
 )
 
 func handler(ctx context.Context, event events.CognitoEventUserPoolsPreSignup) (events.CognitoEventUserPoolsPreSignup, error) {
@@ -20,7 +16,7 @@ func handler(ctx context.Context, event events.CognitoEventUserPoolsPreSignup) (
 	// Security: Validate Email Domain
 	if !isValidDomain(email) {
 		// Returning an error here rejects the signup in Cognito
-		return event, fmt.Errorf("sign-up restricted to @%s and @%s domains", DomainAmalitech, DomainTraining)
+		return event, fmt.Errorf("sign-up restricted to authorized domains only")
 	}
 
 	// Auto-confirm the user if needed (Configuration decision)
@@ -35,7 +31,21 @@ func isValidDomain(email string) bool {
 		return false
 	}
 	domain := strings.ToLower(parts[1])
-	return domain == DomainAmalitech || domain == DomainTraining
+
+	allowedEnv := os.Getenv("ALLOWED_EMAIL_DOMAINS")
+	if allowedEnv == "" {
+		// Fallback safe default or Deny All
+		return false
+	}
+
+	allowedDomains := strings.Split(allowedEnv, ",")
+	for _, d := range allowedDomains {
+		if domain == strings.TrimSpace(d) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func main() {
