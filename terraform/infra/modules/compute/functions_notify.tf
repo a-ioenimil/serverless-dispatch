@@ -3,14 +3,15 @@ module "async_notifier" {
   version = "7.2.0"
 
   function_name = "${var.project_name}-async-notifier"
-  handler       = "main"
-  runtime       = "go1.x"
+  handler       = "bootstrap"
+  runtime       = "provided.al2023"
+  architectures = ["arm64"]
 
   create_package = true
   source_path = [
     {
       path     = "${var.source_dir}/async-notifier"
-      commands = ["GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o main main.go", ":zip"]
+      commands = ["GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -tags lambda.norpc -o bootstrap main.go", ":zip"]
       patterns = ["*.go"]
     }
   ]
@@ -41,12 +42,25 @@ module "async_notifier" {
   environment_variables = {
     FROM_EMAIL = "notifications@amalitech.com" # Placeholder
   }
+}
 
-  event_source_mappings = {
-    dynamodb = {
-      event_source_arn  = var.dynamodb_table_stream_arn
-      starting_position = "LATEST"
-      batch_size        = 1
+resource "aws_lambda_event_source_mapping" "dynamodb_stream" {
+  event_source_arn               = var.dynamodb_table_stream_arn
+  function_name                  = module.async_notifier.lambda_function_arn
+  starting_position              = "LATEST"
+  batch_size                     = 1
+  bisect_batch_on_function_error = true
+  maximum_retry_attempts         = 3
+  function_response_types        = ["ReportBatchItemFailures"]
+
+  destination_config {
+    on_failure {
+      destination_arn = aws_sqs_queue.notifier_dlq.arn
     }
   }
+}
+
+resource "aws_sqs_queue" "notifier_dlq" {
+  name                      = "${var.project_name}-notifier-dlq"
+  message_retention_seconds = 1209600 # 14 days
 }

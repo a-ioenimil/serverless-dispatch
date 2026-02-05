@@ -23,17 +23,19 @@ module "compute" {
 
   project_name = var.project_name
   environment  = var.environment
-  source_dir   = "${path.module}/../../functions/cmd"
 
   # Dependency Injection
   dynamodb_table_arn        = module.database.table_arn
   dynamodb_table_id         = module.database.table_id
   dynamodb_table_stream_arn = module.database.table_stream_arn
   user_pool_arn             = module.auth.user_pool_arn
+  user_pool_id              = module.auth.user_pool_id
+  user_pool_client_id       = module.auth.user_pool_client_id
+  region                    = var.region
 
   # Point to the Go Source Code relative to the module
   # We pass the absolute path to be safe
-  source_dir = abspath("${path.module}/../functions/cmd")
+  source_dir = abspath("${path.module}/../../functions/cmd")
 }
 
 # 4. Attach Triggers to Auth (Post-deployment wiring)

@@ -32,3 +32,23 @@ variable "environment" {
   description = "The deployment environment (e.g., dev, staging, prod)."
   type        = string
 }
+
+variable "user_pool_id" {
+  description = "Cognito User Pool ID"
+  type        = string
+}
+
+variable "user_pool_client_id" {
+  description = "Cognito User Pool Client ID"
+  type        = string
+}
+
+variable "user_pool_arn" {
+  description = "Cognito User Pool ARN"
+  type        = string
+}
+
+variable "region" {
+  description = "AWS Region"
+  type        = string
+}
