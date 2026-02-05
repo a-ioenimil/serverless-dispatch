@@ -1,0 +1,3 @@
+bucket         = "serverless-dispatch-tfstate-7e686"
+key            = "lab/foundation.tfstate"
+region         = "eu-west-1"
