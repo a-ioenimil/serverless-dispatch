@@ -9,14 +9,14 @@ module "api_create_task" {
   create_package = true
   source_path = [
     {
-      path = "${var.source_dir}/api-task-create"
+      path     = "${var.source_dir}/api-task-create"
       commands = ["GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o main main.go", ":zip"]
       patterns = ["*.go"]
     }
   ]
 
   attach_policy_json = true
-  policy_json        = jsonencode({
+  policy_json = jsonencode({
     Version = "2012-10-17"
     Statement = [{
       Effect   = "Allow"
@@ -41,14 +41,14 @@ module "api_get_task" {
   create_package = true
   source_path = [
     {
-      path = "${var.source_dir}/api-task-get"
+      path     = "${var.source_dir}/api-task-list"
       commands = ["GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o main main.go", ":zip"]
       patterns = ["*.go"]
     }
   ]
 
   attach_policy_json = true
-  policy_json        = jsonencode({
+  policy_json = jsonencode({
     Version = "2012-10-17"
     Statement = [{
       Effect   = "Allow"
@@ -62,6 +62,36 @@ module "api_get_task" {
   }
 }
 
-module "api_list_tasks" {
-  source = 
+
+module "api_update_task" {
+  source  = "terraform-aws-modules/lambda/aws"
+  version = "7.2.0"
+
+  function_name = "${var.project_name}-api-update-task"
+  handler       = "main"
+  runtime       = "go1.x"
+
+  create_package = true
+  source_path = [
+    {
+      path     = "${var.source_dir}/api-task-update"
+      commands = ["GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o main main.go", ":zip"]
+      patterns = ["*.go"]
+    }
+  ]
+
+  attach_policy_json = true
+  policy_json = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["dynamodb:UpdateItem", "dynamodb:GetItem"]
+      Resource = var.dynamodb_table_arn
+    }]
+  })
+
+  environment_variables = {
+    TABLE_NAME = var.dynamodb_table_id
+  }
 }
+

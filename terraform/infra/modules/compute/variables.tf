@@ -6,6 +6,12 @@ variable "dynamodb_table_id" {
   description = "The ID (name) of the DynamoDB table."
   type        = string
 }
+
+variable "dynamodb_table_stream_arn" {
+  description = "The ARN of the DynamoDB table stream."
+  type        = string
+}
+
 variable "source_dir" {
   description = "Path to the Go source code for Lambda functions."
   type        = string

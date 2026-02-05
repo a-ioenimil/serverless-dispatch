@@ -18,16 +18,18 @@ module "auth" {
 }
 
 # 3. Compute Module (Lambdas)
-module "serverless_compute" {
-  source = "./modules/serverless-compute"
+module "compute" {
+  source = "./modules/compute"
 
   project_name = var.project_name
   environment  = var.environment
+  source_dir   = "${path.module}/../../functions/cmd"
 
   # Dependency Injection
-  dynamodb_table_arn = module.database.table_arn
-  dynamodb_table_id  = module.database.table_id
-  user_pool_arn      = module.auth.user_pool_arn
+  dynamodb_table_arn        = module.database.table_arn
+  dynamodb_table_id         = module.database.table_id
+  dynamodb_table_stream_arn = module.database.table_stream_arn
+  user_pool_arn             = module.auth.user_pool_arn
 
   # Point to the Go Source Code relative to the module
   # We pass the absolute path to be safe
