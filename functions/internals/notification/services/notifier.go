@@ -19,13 +19,13 @@ func NewTaskNotifierService(sender ports.EmailSender) *TaskNotifierService {
 }
 
 // ProcessTaskStream handles DynamoDB stream events involving tasks
-func (s *TaskNotifierService) ProcessTaskStream(ctx context.Context, record events.DynamoDBStreamRecord) {
+func (s *TaskNotifierService) ProcessTaskStream(ctx context.Context, record events.DynamoDBEventRecord) {
 	// 1. Determine Event Type & Context
 	switch record.EventName {
 	case "INSERT":
-		s.handleTaskCreated(ctx, record.NewImage)
+		s.handleTaskCreated(ctx, record.Change.NewImage)
 	case "MODIFY":
-		s.handleTaskUpdated(ctx, record.OldImage, record.NewImage)
+		s.handleTaskUpdated(ctx, record.Change.OldImage, record.Change.NewImage)
 	}
 }
 
