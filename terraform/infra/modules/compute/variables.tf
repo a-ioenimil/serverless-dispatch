@@ -28,6 +28,11 @@ variable "allowed_email_domains" {
   type        = list(string)
 }
 
+variable "artifact_bucket_id" {
+  description = "S3 Bucket ID for storing Lambda artifacts"
+  type        = string
+}
+
 variable "environment" {
   description = "The deployment environment (e.g., dev, staging, prod)."
   type        = string
@@ -37,4 +42,10 @@ variable "environment" {
 variable "region" {
   description = "AWS Region"
   type        = string
+}
+
+variable "app_version" {
+  description = "The version of the app artifacts. If null, builds locally."
+  type        = string
+  default     = null
 }

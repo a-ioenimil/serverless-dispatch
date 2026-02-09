@@ -1,9 +1,3 @@
-locals {
-  binary_name = "bootstrap"
-  # Build key: CGO disabled, OS linux, Arch arm64. Output must be 'bootstrap' for provided.al2023
-  build_command = "GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -tags lambda.norpc -o bootstrap main.go"
-}
-
 module "api_create_task" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "7.2.0"
@@ -13,14 +7,25 @@ module "api_create_task" {
   runtime       = "provided.al2023"
   architectures = ["arm64"]
 
-  create_package = true
-  source_path = [
+  # Artifact Config: Local Build vs Pre-Built S3
+  create_package = var.app_version == null ? true : false
+  store_on_s3    = var.app_version == null ? true : false
+  s3_bucket      = var.artifact_bucket_id
+
+  # Local Build Source
+  source_path = var.app_version == null ? [
     {
       path     = "${var.source_dir}/api-task-create"
       commands = [local.build_command, ":zip"]
       patterns = ["*.go"]
     }
-  ]
+  ] : null
+
+  # Pre-Built Source
+  s3_existing_package = var.app_version != null ? {
+    bucket = var.artifact_bucket_id
+    key    = "builds/${var.app_version}/api-task-create.zip"
+  } : null
 
   attach_policy_json = true
   policy_json = jsonencode({
@@ -47,6 +52,9 @@ module "api_get_task" {
   architectures = ["arm64"]
 
   create_package = true
+  store_on_s3    = true
+  s3_bucket      = var.artifact_bucket_id
+
   source_path = [
     {
       path     = "${var.source_dir}/api-task-list"
@@ -81,6 +89,9 @@ module "api_update_task" {
   architectures = ["arm64"]
 
   create_package = true
+  store_on_s3    = true
+  s3_bucket      = var.artifact_bucket_id
+
   source_path = [
     {
       path     = "${var.source_dir}/api-task-update"

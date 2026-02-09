@@ -6,7 +6,15 @@ module "database" {
   environment  = var.environment
 }
 
-# 2. Compute Module (Lambdas)
+# 2. Storage Module (Artifacts)
+module "storage" {
+  source = "./modules/storage"
+
+  project_name = var.project_name
+  environment  = var.environment
+}
+
+# 3. Compute Module (Lambdas)
 # Compute now comes before Auth because Auth needs Lambda ARNs for triggers
 module "compute" {
   source = "./modules/compute"
@@ -18,6 +26,8 @@ module "compute" {
   dynamodb_table_arn        = module.database.table_arn
   dynamodb_table_id         = module.database.table_id
   dynamodb_table_stream_arn = module.database.table_stream_arn
+  artifact_bucket_id        = module.storage.bucket_id
+  app_version               = var.app_version
 
   # Configuration
   allowed_email_domains = var.allowed_email_domains

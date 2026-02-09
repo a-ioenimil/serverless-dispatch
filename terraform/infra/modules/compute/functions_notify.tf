@@ -7,14 +7,25 @@ module "async_notifier" {
   runtime       = "provided.al2023"
   architectures = ["arm64"]
 
-  create_package = true
-  source_path = [
+  # Artifact Config: Local Build vs Pre-Built S3
+  create_package = var.app_version == null ? true : false
+  store_on_s3    = var.app_version == null ? true : false
+  s3_bucket      = var.artifact_bucket_id
+
+  # Local Build Source
+  source_path = var.app_version == null ? [
     {
       path     = "${var.source_dir}/async-notifier"
       commands = ["GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -tags lambda.norpc -o bootstrap main.go", ":zip"]
       patterns = ["*.go"]
     }
-  ]
+  ] : null
+
+  # Pre-Built Source
+  s3_existing_package = var.app_version != null ? {
+    bucket = var.artifact_bucket_id
+    key    = "builds/${var.app_version}/async-notifier.zip"
+  } : null
 
   # Permission to read from DynamoDB Stream and Send Emails
   attach_policy_json = true

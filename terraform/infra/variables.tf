@@ -27,3 +27,9 @@ variable "allowed_email_domains" {
   type        = list(string)
   default     = ["amalitech.com", "amalitechtraining.org"]
 }
+
+variable "app_version" {
+  description = "The version (e.g. git commit hash) of the application artifacts. If null, local build is used."
+  type        = string
+  default     = null
+}

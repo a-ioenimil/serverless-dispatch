@@ -19,14 +19,10 @@ module "dynamodb_table" {
       hash_key        = "GSI1_PK"
       range_key       = "GSI1_SK"
       projection_type = "ALL"
-      read_capacity   = 1
-      write_capacity  = 1
     }
   ]
 
-  billing_mode   = "PAY_PER_REQUEST"
-  read_capacity  = 1
-  write_capacity = 1
+  billing_mode = "PAY_PER_REQUEST"
 
   stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
