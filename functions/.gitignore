@@ -1,0 +1,17 @@
+# Binaries
+bootstrap
+main
+*.exe
+*.dll
+
+# Build Artifacts
+*.zip
+js/
+wasm/
+
+# Dependency directories (if using vendor, usually committed, but verify)
+vendor/
+
+# Test output
+*.out
+*.test

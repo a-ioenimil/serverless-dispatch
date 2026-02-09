@@ -17,7 +17,7 @@ module "async_notifier" {
     {
       path     = "${var.source_dir}/async-notifier"
       commands = ["GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -tags lambda.norpc -o bootstrap main.go", ":zip"]
-      patterns = ["*.go"]
+      patterns = [".*\\.go"]
     }
   ] : null
 

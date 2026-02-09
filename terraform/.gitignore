@@ -49,3 +49,7 @@ terraform.rc
 # terraform backend configuration files
 *.tfbackend
 
+# Lambda Build Artifacts
+builds/
+*.zip
+

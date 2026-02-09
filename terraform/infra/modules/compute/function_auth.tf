@@ -17,7 +17,7 @@ module "auth_pre_sign_up" {
     {
       path     = "${var.source_dir}/auth-pre-signup"
       commands = [local.build_command, ":zip"]
-      patterns = ["*.go"]
+      patterns = [".*\\.go"]
     }
   ] : null
 
@@ -51,7 +51,7 @@ module "auth_post_confirmation" {
     {
       path     = "${var.source_dir}/auth-post-signup"
       commands = [local.build_command, ":zip"]
-      patterns = ["*.go"]
+      patterns = [".*\\.go"]
     }
   ] : null
 

@@ -17,7 +17,7 @@ module "api_create_task" {
     {
       path     = "${var.source_dir}/api-task-create"
       commands = [local.build_command, ":zip"]
-      patterns = ["*.go"]
+      patterns = [".*\\.go"]
     }
   ] : null
 
@@ -59,7 +59,7 @@ module "api_get_task" {
     {
       path     = "${var.source_dir}/api-task-list"
       commands = [local.build_command, ":zip"]
-      patterns = ["*.go"]
+      patterns = [".*\\.go"]
     }
   ]
 
@@ -96,7 +96,7 @@ module "api_update_task" {
     {
       path     = "${var.source_dir}/api-task-update"
       commands = [local.build_command, ":zip"]
-      patterns = ["*.go"]
+      patterns = [".*\\.go"]
     }
   ]
 
