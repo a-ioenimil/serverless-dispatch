@@ -8,6 +8,7 @@ import (
 	"github.com/a-ioenimil/serverless-dispatch/functions/internals/common/logger"
 	"github.com/a-ioenimil/serverless-dispatch/functions/internals/identity/services"
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 )
 
 var (
@@ -32,4 +33,8 @@ func handler(ctx context.Context, event events.CognitoEventUserPoolsPreSignup) (
 	}
 
 	return event, nil
+}
+
+func main() {
+	lambda.Start(handler)
 }

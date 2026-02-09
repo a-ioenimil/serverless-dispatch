@@ -46,6 +46,11 @@ module "async_notifier" {
         Effect   = "Allow"
         Action   = ["ses:SendEmail", "ses:SendRawEmail"]
         Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["sqs:SendMessage"]
+        Resource = aws_sqs_queue.notifier_dlq.arn
       }
     ]
   })
