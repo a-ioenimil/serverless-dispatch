@@ -28,7 +28,7 @@ func (r *DynamoDBUserRepository) Save(ctx context.Context, user domain.User) err
 	}
 
 	// Single Table Design modifications if needed (e.g. PK/SK)
-	// Assuming simple table or specific User table from context, 
+	// Assuming simple table or specific User table from context,
 	// but usually STD requires PK="USER#<ID>", SK="METADATA"
 	// modifying item keys for STD support:
 	item["PK"], _ = attributevalue.Marshal("USER#" + user.ID)
