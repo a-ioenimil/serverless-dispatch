@@ -12,10 +12,10 @@ import (
 )
 
 type Metadata struct {
-	PK     string      `dynamodbav:"pk"`
-	SK     string      `dynamodbav:"sk"`
-	GSI1PK string      `dynamodbav:"gsi1_pk,omitempty"`
-	GSI1SK string      `dynamodbav:"gsi1_sk,omitempty"`
+	PK     string      `dynamodbav:"PK"`
+	SK     string      `dynamodbav:"SK"`
+	GSI1PK string      `dynamodbav:"GSI1_PK,omitempty"`
+	GSI1SK string      `dynamodbav:"GSI1_SK,omitempty"`
 	Data   domain.Task `dynamodbav:",inline"` // Flattens task fields into top level
 }
 
@@ -71,8 +71,8 @@ func (r *DynamoDBTaskRepository) GetByID(ctx context.Context, id string) (*domai
 	out, err := r.client.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(r.tableName),
 		Key: map[string]types.AttributeValue{
-			"pk": &types.AttributeValueMemberS{Value: pk},
-			"sk": &types.AttributeValueMemberS{Value: sk},
+			"PK": &types.AttributeValueMemberS{Value: pk},
+			"SK": &types.AttributeValueMemberS{Value: sk},
 		},
 	})
 	if err != nil {
@@ -97,7 +97,7 @@ func (r *DynamoDBTaskRepository) ListByAssignee(ctx context.Context, assigneeID 
 	out, err := r.client.Query(ctx, &dynamodb.QueryInput{
 		TableName:              aws.String(r.tableName),
 		IndexName:              aws.String("GSI1"),
-		KeyConditionExpression: aws.String("gsi1_pk = :pk"),
+		KeyConditionExpression: aws.String("GSI1_PK = :pk"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":pk": &types.AttributeValueMemberS{Value: gsiPK},
 		},
@@ -124,7 +124,7 @@ func (r *DynamoDBTaskRepository) ListAll(ctx context.Context) ([]domain.Task, er
 	out, err := r.client.Scan(ctx, &dynamodb.ScanInput{
 		TableName: aws.String(r.tableName),
 		// Filter to only get Task items (PK starts with TASK#)
-		FilterExpression: aws.String("begins_with(pk, :pk_prefix) AND sk = :sk_meta"),
+		FilterExpression: aws.String("begins_with(PK, :pk_prefix) AND SK = :sk_meta"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":pk_prefix": &types.AttributeValueMemberS{Value: "TASK#"},
 			":sk_meta":   &types.AttributeValueMemberS{Value: "METADATA"},
