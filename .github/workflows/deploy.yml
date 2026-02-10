@@ -66,6 +66,8 @@ jobs:
               uses: hashicorp/setup-terraform@v3
 
             - name: Create Terraform Configs
+              env:
+                  TF_VAR_CONTENT: ${{ secrets.TF_DEV_TFVARS }}
               run: |
                   # Create Backend Config
                   cat <<EOF > dev.tfbackend
@@ -75,7 +77,7 @@ jobs:
                   EOF
 
                   # Create Vars File
-                  echo "${{ secrets.TF_DEV_TFVARS }}" > dev.tfvars
+                  echo "$TF_VAR_CONTENT" > dev.tfvars
 
             - name: Terraform Init
               run: terraform init -backend-config=dev.tfbackend
@@ -114,6 +116,8 @@ jobs:
               uses: hashicorp/setup-terraform@v3
 
             - name: Create Terraform Configs
+              env:
+                  TF_VAR_CONTENT: ${{ secrets.TF_DEV_TFVARS }}
               run: |
                   # Create Backend Config
                   cat <<EOF > dev.tfbackend
@@ -123,7 +127,7 @@ jobs:
                   EOF
 
                   # Create Vars File
-                  echo "${{ secrets.TF_DEV_TFVARS }}" > dev.tfvars
+                  echo "$TF_VAR_CONTENT" > dev.tfvars
 
             - name: Terraform Init
               run: terraform init -backend-config=dev.tfbackend
