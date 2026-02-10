@@ -65,6 +65,14 @@ jobs:
             - name: Setup Terraform
               uses: hashicorp/setup-terraform@v3
 
+            - name: Create Backend Config
+              run: |
+                  cat <<EOF > dev.tfbackend
+                  bucket = "${{ secrets.TF_STATE_BUCKET }}"
+                  key    = "lab/foundation.tfstate"
+                  region = "eu-west-1"
+                  EOF
+
             - name: Terraform Init
               run: terraform init -backend-config=dev.tfbackend
 
@@ -100,6 +108,14 @@ jobs:
 
             - name: Setup Terraform
               uses: hashicorp/setup-terraform@v3
+
+            - name: Create Backend Config
+              run: |
+                  cat <<EOF > dev.tfbackend
+                  bucket = "${{ secrets.TF_STATE_BUCKET }}"
+                  key    = "lab/foundation.tfstate"
+                  region = "eu-west-1"
+                  EOF
 
             - name: Terraform Init
               run: terraform init -backend-config=dev.tfbackend
