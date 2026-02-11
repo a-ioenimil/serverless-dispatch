@@ -5,7 +5,12 @@ import {
   useState,
   ReactNode,
 } from 'react'
-import { getStoredTokens, getStoredUser, signOut as signOutAuth, isTokenExpired } from '../../lib/auth'
+import {
+  getStoredTokens,
+  getStoredUser,
+  signOut as signOutAuth,
+  isTokenExpired,
+} from '../../lib/auth'
 import type { AuthTokens, AuthUser } from '../../lib/auth'
 
 interface AuthContextType {
