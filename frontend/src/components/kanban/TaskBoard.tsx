@@ -2,17 +2,21 @@ import { useEffect, useMemo, useState } from 'react'
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
+import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import {
   Check,
   Circle,
   Flame,
   GripVertical,
+  LogOut,
   MoreHorizontal,
   Plus,
   RefreshCcw,
   Timer,
 } from 'lucide-react'
+
+import { useAuth } from '../../integrations/auth/auth-context'
 
 import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
@@ -87,6 +91,8 @@ const emptyOrder: Record<TaskStatus, Array<string>> = {
 }
 
 export function TaskBoard() {
+  const navigate = useNavigate()
+  const { user, signOut } = useAuth()
   const queryClient = useQueryClient()
   const [title, setTitle] = useState('')
   const [priority, setPriority] = useState<TaskPriority>('MEDIUM')
@@ -295,6 +301,12 @@ export function TaskBoard() {
     toast.success('Order reset')
   }
 
+  const handleSignOut = () => {
+    signOut()
+    toast.success('Signed out')
+    navigate({ to: '/login', replace: true })
+  }
+
   const isInitialLoading = tasksQuery.isLoading
   const isRefreshing = tasksQuery.isFetching && !tasksQuery.isLoading
 
@@ -353,6 +365,14 @@ export function TaskBoard() {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={resetOrder}>
                 Reset column order
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleSignOut}
+                className="text-red-400 focus:bg-red-500/10"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -1,0 +1,142 @@
+import {
+  CognitoIdentityProviderClient,
+  InitiateAuthCommand,
+} from '@aws-sdk/client-cognito-identity-provider'
+
+const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID as string
+const userPoolId = import.meta.env.VITE_COGNITO_USER_POOL_ID as string
+const region = (import.meta.env.VITE_AWS_REGION as string) || 'us-east-1'
+
+const client = new CognitoIdentityProviderClient({ region })
+
+export interface AuthTokens {
+  idToken: string
+  accessToken: string
+  refreshToken?: string
+  expiresIn: number
+}
+
+export interface AuthUser {
+  id: string
+  email: string
+  groups: string[]
+}
+
+const TOKEN_STORAGE_KEY = 'auth_tokens'
+const USER_STORAGE_KEY = 'auth_user'
+
+/**
+ * Sign in with email and password
+ */
+export async function signIn(
+  email: string,
+  password: string,
+): Promise<AuthTokens> {
+  try {
+    const command = new InitiateAuthCommand({
+      ClientId: clientId,
+      AuthFlow: 'USER_PASSWORD_AUTH',
+      AuthParameters: {
+        USERNAME: email,
+        PASSWORD: password,
+      },
+    })
+
+    const response = await client.send(command)
+
+    if (!response.AuthenticationResult) {
+      throw new Error('No authentication result returned')
+    }
+
+    const tokens: AuthTokens = {
+      idToken: response.AuthenticationResult.IdToken || '',
+      accessToken: response.AuthenticationResult.AccessToken || '',
+      refreshToken: response.AuthenticationResult.RefreshToken,
+      expiresIn: response.AuthenticationResult.ExpiresIn || 3600,
+    }
+
+    // Store tokens
+    localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokens))
+
+    // Extract user info from id token
+    const user = extractUserFromToken(tokens.idToken)
+    if (user) {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user))
+    }
+
+    return tokens
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Sign in failed'
+    throw new Error(message)
+  }
+}
+
+/**
+ * Extract user info from ID token
+ */
+function extractUserFromToken(token: string): AuthUser | null {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+
+    const decoded = JSON.parse(atob(parts[1]))
+
+    return {
+      id: decoded.sub || '',
+      email: decoded.email || '',
+      groups: decoded['cognito:groups']
+        ? decoded['cognito:groups'].split(',')
+        : [],
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Get stored tokens from localStorage
+ */
+export function getStoredTokens(): AuthTokens | null {
+  const stored = localStorage.getItem(TOKEN_STORAGE_KEY)
+  return stored ? JSON.parse(stored) : null
+}
+
+/**
+ * Get stored user from localStorage
+ */
+export function getStoredUser(): AuthUser | null {
+  const stored = localStorage.getItem(USER_STORAGE_KEY)
+  return stored ? JSON.parse(stored) : null
+}
+
+/**
+ * Sign out and clear tokens
+ */
+export function signOut(): void {
+  localStorage.removeItem(TOKEN_STORAGE_KEY)
+  localStorage.removeItem(USER_STORAGE_KEY)
+}
+
+/**
+ * Check if user is authenticated
+ */
+export function isAuthenticated(): boolean {
+  const tokens = getStoredTokens()
+  return !!tokens?.accessToken
+}
+
+/**
+ * Check if token is expired
+ */
+export function isTokenExpired(token: string): boolean {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return true
+
+    const decoded = JSON.parse(atob(parts[1]))
+    const expiresAt = decoded.exp * 1000 // Convert to milliseconds
+    return Date.now() >= expiresAt
+  } catch {
+    return true
+  }
+}

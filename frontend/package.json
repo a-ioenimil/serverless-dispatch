@@ -12,6 +12,7 @@
     "check": "prettier --write . && eslint --fix"
   },
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.987.0",
     "@hello-pangea/dnd": "^18.0.1",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/react-devtools": "^0.7.0",
