@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import {
   Eye,
@@ -234,6 +234,16 @@ export default function SignInPage() {
                     )}
                   </Button>
                 </form>
+
+                <div className="text-center text-sm text-amber-100/70">
+                  Don&apos;t have an account?{' '}
+                  <Link
+                    to="/register"
+                    className="text-amber-200/80 transition hover:text-amber-200"
+                  >
+                    Sign up
+                  </Link>
+                </div>
 
                 <div className="text-center text-xs text-amber-100/50">
                   Cognito will verify your session before granting access.

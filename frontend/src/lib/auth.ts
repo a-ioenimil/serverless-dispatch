@@ -1,6 +1,9 @@
 import {
   CognitoIdentityProviderClient,
+  ConfirmSignUpCommand,
   InitiateAuthCommand,
+  ResendConfirmationCodeCommand,
+  SignUpCommand,
 } from '@aws-sdk/client-cognito-identity-provider'
 
 const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID as string
@@ -20,6 +23,19 @@ export interface AuthUser {
   id: string
   email: string
   groups: string[]
+}
+
+export interface SignUpResult {
+  userSub: string
+  userConfirmed: boolean
+}
+
+export interface ConfirmSignUpResult {
+  userConfirmed: boolean
+}
+
+export interface ResendConfirmationResult {
+  destination?: string
 }
 
 const TOKEN_STORAGE_KEY = 'auth_tokens'
@@ -67,6 +83,87 @@ export async function signIn(
     return tokens
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Sign in failed'
+    throw new Error(message)
+  }
+}
+
+/**
+ * Sign up with email and password
+ */
+export async function signUp(
+  email: string,
+  password: string,
+): Promise<SignUpResult> {
+  try {
+    const command = new SignUpCommand({
+      ClientId: clientId,
+      Username: email,
+      Password: password,
+      UserAttributes: [
+        {
+          Name: 'email',
+          Value: email,
+        },
+      ],
+    })
+
+    const response = await client.send(command)
+
+    return {
+      userSub: response.UserSub || '',
+      userConfirmed: Boolean(response.UserConfirmed),
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Sign up failed'
+    throw new Error(message)
+  }
+}
+
+/**
+ * Confirm sign up with the verification code
+ */
+export async function confirmSignUp(
+  email: string,
+  code: string,
+): Promise<ConfirmSignUpResult> {
+  try {
+    const command = new ConfirmSignUpCommand({
+      ClientId: clientId,
+      Username: email,
+      ConfirmationCode: code,
+    })
+
+    await client.send(command)
+
+    return {
+      userConfirmed: true,
+    }
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Verification failed'
+    throw new Error(message)
+  }
+}
+
+/**
+ * Resend verification code for sign up
+ */
+export async function resendSignUpCode(
+  email: string,
+): Promise<ResendConfirmationResult> {
+  try {
+    const command = new ResendConfirmationCodeCommand({
+      ClientId: clientId,
+      Username: email,
+    })
+
+    const response = await client.send(command)
+
+    return {
+      destination: response.CodeDeliveryDetails?.Destination,
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Resend failed'
     throw new Error(message)
   }
 }

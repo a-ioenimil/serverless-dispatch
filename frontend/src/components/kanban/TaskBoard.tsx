@@ -10,10 +10,11 @@ import {
   Flame,
   GripVertical,
   LogOut,
-  MoreHorizontal,
   Plus,
   RefreshCcw,
   Timer,
+  UserCircle,
+  ChevronDown,
 } from 'lucide-react'
 
 import { useAuth } from '../../integrations/auth/auth-context'
@@ -24,6 +25,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
@@ -325,7 +327,7 @@ export function TaskBoard() {
             Optimistic task flow with cold-start aware loading.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           <Button
             asChild
             variant="outline"
@@ -347,17 +349,25 @@ export function TaskBoard() {
               Sync
             </motion.button>
           </Button>
+          <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.2em] text-amber-100/70">
+            {tasks.length} tasks
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full text-amber-100/80 hover:bg-white/10 hover:text-amber-100"
+                variant="outline"
+                className="flex items-center gap-2 rounded-full border-white/10 bg-white/5 px-4 text-xs font-medium uppercase tracking-[0.18em] text-amber-100/80 hover:bg-white/10"
               >
-                <MoreHorizontal className="h-4 w-4" />
+                <UserCircle className="h-4 w-4" />
+                Account
+                <ChevronDown className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuLabel className="text-xs uppercase tracking-[0.2em] text-amber-100/60">
+                {user?.email ?? 'Signed in'}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => tasksQuery.refetch()}>
                 <RefreshCcw className="h-4 w-4" />
                 Refresh tasks
@@ -376,9 +386,6 @@ export function TaskBoard() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.2em] text-amber-100/70">
-            {tasks.length} tasks
-          </div>
         </div>
       </header>
 
