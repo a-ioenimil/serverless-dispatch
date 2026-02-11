@@ -67,9 +67,12 @@ module "api_get_task" {
   policy_json = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = ["dynamodb:GetItem", "dynamodb:Query"]
-      Resource = var.dynamodb_table_arn
+      Effect = "Allow"
+      Action = ["dynamodb:GetItem", "dynamodb:Query"]
+      Resource = [
+        var.dynamodb_table_arn,
+        "${var.dynamodb_table_arn}/index/GSI1"
+      ]
     }]
   })
 
