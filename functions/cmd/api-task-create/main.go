@@ -41,7 +41,7 @@ func init() {
 	svc = services.NewTaskService(repo)
 }
 
-func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func handler(ctx context.Context, request events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
 	slog.Info("Handling create task request", "request_id", request.RequestContext.RequestID)
 
 	// 1. Parse Body
@@ -52,24 +52,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	}
 
 	// 2. Extract Auth Context
-	claims := request.RequestContext.Authorizer["claims"]
-	claimsMap, ok := claims.(map[string]interface{})
-
-	userID := "unknown"
-	userRole := "MEMBER"
-
-	if ok {
-		if sub, ok := claimsMap["sub"].(string); ok {
-			userID = sub
-		}
-		if groups, ok := claimsMap["cognito:groups"].(string); ok {
-			if strings.Contains(groups, "Admins") {
-				userRole = "ADMIN"
-			}
-		}
-	} else {
-		slog.Warn("No claims found in request context")
-	}
+	userID, userRole := extractAuth(request)
 
 	// 3. Call Service
 	task, err := svc.CreateTask(ctx, req, userRole, userID)
@@ -97,9 +80,29 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	return response(http.StatusCreated, resDTO), nil
 }
 
-func response(statusCode int, body interface{}) events.APIGatewayProxyResponse {
+func extractAuth(request events.APIGatewayV2HTTPRequest) (string, string) {
+	userID := "unknown"
+	userRole := "MEMBER"
+
+	if request.RequestContext.Authorizer.JWT.Claims != nil {
+		if sub, ok := request.RequestContext.Authorizer.JWT.Claims["sub"]; ok {
+			userID = sub
+		}
+		if groups, ok := request.RequestContext.Authorizer.JWT.Claims["cognito:groups"]; ok {
+			if strings.Contains(groups, "Admins") {
+				userRole = "ADMIN"
+			}
+		}
+		return userID, userRole
+	}
+
+	slog.Warn("No claims found in request context")
+	return userID, userRole
+}
+
+func response(statusCode int, body interface{}) events.APIGatewayV2HTTPResponse {
 	b, _ := json.Marshal(body)
-	return events.APIGatewayProxyResponse{
+	return events.APIGatewayV2HTTPResponse{
 		StatusCode: statusCode,
 		Body:       string(b),
 		Headers: map[string]string{
