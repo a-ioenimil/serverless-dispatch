@@ -1,10 +1,10 @@
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
-
-import Header from '../components/Header'
+import { Toaster } from 'sonner'
 
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
+import { TooltipProvider } from '../components/ui/tooltip'
 
 import type { QueryClient } from '@tanstack/react-query'
 
@@ -14,9 +14,9 @@ interface MyRouterContext {
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   component: () => (
-    <>
-      <Header />
+    <TooltipProvider delayDuration={150}>
       <Outlet />
+      <Toaster position="bottom-right" theme="dark" richColors />
       <TanStackDevtools
         config={{
           position: 'bottom-right',
@@ -29,6 +29,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
           TanStackQueryDevtools,
         ]}
       />
-    </>
+    </TooltipProvider>
   ),
 })
