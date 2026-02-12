@@ -107,9 +107,17 @@ module "api_update_task" {
   policy_json = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = ["dynamodb:UpdateItem", "dynamodb:GetItem"]
-      Resource = var.dynamodb_table_arn
+      Effect = "Allow"
+      Action = [
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:GetItem",
+        "dynamodb:Query"
+      ]
+      Resource = [
+        var.dynamodb_table_arn,
+        "${var.dynamodb_table_arn}/index/*"
+      ]
     }]
   })
 
