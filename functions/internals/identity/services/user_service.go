@@ -29,3 +29,7 @@ func (s *UserService) CreateUser(ctx context.Context, id, email, username string
 
 	return s.repo.Save(ctx, user)
 }
+
+func (s *UserService) ListUsers(ctx context.Context) ([]domain.User, error) {
+	return s.repo.ListAll(ctx)
+}

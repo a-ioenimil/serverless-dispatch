@@ -7,7 +7,6 @@ import {
 } from '@aws-sdk/client-cognito-identity-provider'
 
 const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID as string
-const userPoolId = import.meta.env.VITE_COGNITO_USER_POOL_ID as string
 const region = (import.meta.env.VITE_AWS_REGION as string) || 'us-east-1'
 
 const client = new CognitoIdentityProviderClient({ region })
@@ -23,7 +22,7 @@ export interface AuthUser {
   id: string
   username: string
   email: string
-  groups: string[]
+  groups: Array<string>
 }
 
 export interface SignUpResult {

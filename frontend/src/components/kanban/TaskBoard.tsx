@@ -6,6 +6,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import {
   Check,
+  ChevronDown,
   Circle,
   Flame,
   GripVertical,
@@ -14,7 +15,6 @@ import {
   RefreshCcw,
   Timer,
   UserCircle,
-  ChevronDown,
 } from 'lucide-react'
 
 import { useAuth } from '../../integrations/auth/auth-context'
@@ -41,6 +41,7 @@ import { ScrollArea } from '../ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { cn } from '../../lib/utils'
 import { createTask, listTasks, updateTask } from '../../lib/tasks'
+import { listUsers } from '../../lib/users'
 import type { SubmitEvent } from 'react'
 import type { DragStart, DropResult } from '@hello-pangea/dnd'
 import type {
@@ -49,6 +50,7 @@ import type {
   TaskPriority,
   TaskStatus,
   UpdateTaskInput,
+  UserSummary,
 } from '../../lib/types'
 
 const columnMeta: Array<{
@@ -102,18 +104,39 @@ export function TaskBoard() {
   const [priority, setPriority] = useState<TaskPriority>('MEDIUM')
   const [orderByStatus, setOrderByStatus] = useState(emptyOrder)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const unassignedValue = 'UNASSIGNED'
 
   const tasksQuery = useQuery({
     queryKey: ['tasks'],
     queryFn: listTasks,
   })
 
+  const usersQuery = useQuery({
+    queryKey: ['users'],
+    queryFn: listUsers,
+  })
+
   const tasks = tasksQuery.data ?? []
+  const users = usersQuery.data ?? []
   const isAdmin = (user?.groups ?? []).includes('Admins')
   const tasksById = useMemo(
     () => new Map(tasks.map((task) => [task.id, task])),
     [tasks],
   )
+  const usersById = useMemo(
+    () => new Map(users.map((userItem) => [userItem.id, userItem])),
+    [users],
+  )
+  const usersByUsername = useMemo(
+    () => new Map(users.map((userItem) => [userItem.username, userItem])),
+    [users],
+  )
+
+  const resolveUsername = (value?: string | null) => {
+    if (!value) return 'Unassigned'
+    const found = usersById.get(value) ?? usersByUsername.get(value)
+    return found?.username ?? value
+  }
 
   useEffect(() => {
     if (!tasks.length) {
@@ -150,7 +173,7 @@ export function TaskBoard() {
         status: 'OPEN',
         priority: input.priority,
         assignee_id: input.assignee_id ?? null,
-        created_by: 'you',
+        created_by: user?.username ?? user?.email ?? 'you',
         created_at: new Date().toISOString(),
       }
 
@@ -429,12 +452,24 @@ export function TaskBoard() {
           </SelectContent>
         </Select>
         {isAdmin && (
-          <Input
-            value={assignee}
-            onChange={(event) => setAssignee(event.target.value)}
-            placeholder="Assign username"
-            className="h-10 max-w-40 rounded-full border-white/10 bg-black/30 text-xs uppercase tracking-[0.1em] text-amber-100 placeholder:text-amber-100/30 focus-visible:ring-amber-200/20"
-          />
+          <Select
+            value={assignee || unassignedValue}
+            onValueChange={(value) =>
+              setAssignee(value === unassignedValue ? '' : value)
+            }
+          >
+            <SelectTrigger className="h-10 max-w-48 rounded-full border-white/10 bg-black/30 text-xs uppercase tracking-[0.1em] text-amber-100/80">
+              <SelectValue placeholder="Assignee" />
+            </SelectTrigger>
+            <SelectContent className="border-white/10 bg-black/90 text-amber-50">
+              <SelectItem value={unassignedValue}>Unassigned</SelectItem>
+              {users.map((userItem: UserSummary) => (
+                <SelectItem key={userItem.id} value={userItem.username}>
+                  {userItem.username}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
         <Button
           asChild
@@ -521,7 +556,6 @@ export function TaskBoard() {
                                   <motion.article
                                     ref={dragProvided.innerRef}
                                     {...dragProvided.draggableProps}
-                                    {...dragProvided.dragHandleProps}
                                     layout
                                     whileHover={{ y: -2 }}
                                     animate={{
@@ -542,7 +576,11 @@ export function TaskBoard() {
                                         'border-amber-200/60 bg-black/70',
                                     )}
                                   >
-                                    <div className="flex items-start gap-3">
+                                    <div
+                                      {...dragProvided.dragHandleProps}
+                                      className="contents"
+                                    >
+                                      <div className="flex items-start gap-3">
                                       <Tooltip>
                                         <TooltipTrigger asChild>
                                           <span
@@ -559,7 +597,7 @@ export function TaskBoard() {
                                           Drag to reorder
                                         </TooltipContent>
                                       </Tooltip>
-                                      <div className="flex-1">
+                                      <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between gap-2">
                                           <h3 className="text-sm font-medium text-amber-100">
                                             {task.title}
@@ -573,14 +611,39 @@ export function TaskBoard() {
                                             {task.priority}
                                           </span>
                                         </div>
-                                        <div className="mt-2 flex items-center gap-3 text-xs text-slate-200/50">
-                                          <span>Owner {task.created_by}</span>
-                                          <span className="h-1 w-1 rounded-full bg-white/20" />
-                                          <span>
-                                            Assignee {task.assignee_id || 'Unassigned'}
+                                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-200/50">
+                                          <span className="shrink-0">
+                                            Owner{' '}
+                                            {resolveUsername(task.created_by)}
                                           </span>
                                           <span className="h-1 w-1 rounded-full bg-white/20" />
-                                          <span>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <span
+                                                className="max-w-[120px] truncate"
+                                                aria-label={`Assignee ${resolveUsername(task.assignee_id)}`}
+                                              >
+                                                Assignee{' '}
+                                                {resolveUsername(
+                                                  task.assignee_id,
+                                                ).length > 12
+                                                  ? `${resolveUsername(task.assignee_id).slice(0, 12)}...`
+                                                  : resolveUsername(
+                                                      task.assignee_id,
+                                                    )}
+                                              </span>
+                                            </TooltipTrigger>
+                                            <TooltipContent
+                                              side="top"
+                                              className="border-white/10 bg-black/90 text-amber-100/80"
+                                            >
+                                              {resolveUsername(
+                                                task.assignee_id,
+                                              )}
+                                            </TooltipContent>
+                                          </Tooltip>
+                                          <span className="h-1 w-1 rounded-full bg-white/20" />
+                                          <span className="shrink-0">
                                             {new Date(
                                               task.created_at,
                                             ).toLocaleDateString()}
@@ -588,36 +651,61 @@ export function TaskBoard() {
                                         </div>
                                         {isAdmin && (
                                           <div className="mt-3 flex items-center gap-2">
-                                            <Input
-                                              defaultValue={task.assignee_id ?? ''}
-                                              onBlur={(event) => {
+                                            <Select
+                                              value={
+                                                task.assignee_id ??
+                                                unassignedValue
+                                              }
+                                              onValueChange={(value) => {
                                                 const nextAssignee =
-                                                  event.currentTarget.value.trim()
+                                                  value === unassignedValue
+                                                    ? null
+                                                    : value
                                                 const currentAssignee =
-                                                  task.assignee_id ?? ''
+                                                  task.assignee_id ?? null
                                                 if (
-                                                  nextAssignee !== currentAssignee &&
+                                                  nextAssignee !==
+                                                    currentAssignee &&
                                                   !updateMutation.isPending
                                                 ) {
                                                   updateMutation.mutate({
                                                     id: task.id,
                                                     input: {
-                                                      assignee_id:
-                                                        nextAssignee || null,
+                                                      assignee_id: nextAssignee,
                                                     },
                                                   })
                                                 }
                                               }}
-                                              placeholder="assignee username"
-                                              className="h-8 border-white/10 bg-black/30 text-[10px] uppercase tracking-[0.12em] text-amber-100 placeholder:text-amber-100/40 focus-visible:ring-amber-200/20"
-                                            />
+                                            >
+                                              <SelectTrigger className="h-8 w-36 border-white/10 bg-black/30 px-2 text-[10px] uppercase tracking-[0.12em] text-amber-100/80">
+                                                <SelectValue placeholder="Assignee" />
+                                              </SelectTrigger>
+                                              <SelectContent className="border-white/10 bg-black/90 text-amber-50">
+                                                <SelectItem
+                                                  value={unassignedValue}
+                                                >
+                                                  Unassigned
+                                                </SelectItem>
+                                                {users.map(
+                                                  (userItem: UserSummary) => (
+                                                    <SelectItem
+                                                      key={userItem.id}
+                                                      value={userItem.username}
+                                                    >
+                                                      {userItem.username}
+                                                    </SelectItem>
+                                                  ),
+                                                )}
+                                              </SelectContent>
+                                            </Select>
                                             <Select
                                               value={task.priority}
                                               onValueChange={(value) => {
                                                 const nextPriority =
                                                   value as TaskPriority
                                                 if (
-                                                  nextPriority !== task.priority &&
+                                                  nextPriority !==
+                                                    task.priority &&
                                                   !updateMutation.isPending
                                                 ) {
                                                   updateMutation.mutate({
@@ -633,11 +721,15 @@ export function TaskBoard() {
                                                 <SelectValue placeholder="Priority" />
                                               </SelectTrigger>
                                               <SelectContent className="border-white/10 bg-black/90 text-amber-50">
-                                                <SelectItem value="LOW">Low</SelectItem>
+                                                <SelectItem value="LOW">
+                                                  Low
+                                                </SelectItem>
                                                 <SelectItem value="MEDIUM">
                                                   Medium
                                                 </SelectItem>
-                                                <SelectItem value="HIGH">High</SelectItem>
+                                                <SelectItem value="HIGH">
+                                                  High
+                                                </SelectItem>
                                               </SelectContent>
                                             </Select>
                                           </div>
@@ -658,6 +750,7 @@ export function TaskBoard() {
                                         aria-label="Toggle done"
                                         className="size-7 rounded-full border-white/10 bg-white/5 text-amber-100 shadow-none transition duration-100 hover:border-amber-200/60"
                                       />
+                                      </div>
                                     </div>
                                   </motion.article>
                                 )}

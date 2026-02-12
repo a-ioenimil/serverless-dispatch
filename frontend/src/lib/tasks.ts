@@ -25,16 +25,16 @@ function parseApiBody<T>(data: unknown): T | null {
   return data as T
 }
 
-export async function listTasks(): Promise<Task[]> {
-  const response = await api.get<Task[]>('/tasks')
-  const parsed = parseApiBody<Task[]>(response.data)
+export async function listTasks(): Promise<Array<Task>> {
+  const response = await api.get<Array<Task>>('/tasks')
+  const parsed = parseApiBody<Array<Task>>(response.data)
   return Array.isArray(parsed) ? parsed : []
 }
 
 export async function createTask(input: CreateTaskInput): Promise<Task> {
   const response = await api.post<Task>('/tasks', input)
   const parsed = parseApiBody<Task>(response.data)
-  return parsed ?? (response.data as Task)
+  return parsed ?? response.data
 }
 
 export async function updateTask(
@@ -43,5 +43,5 @@ export async function updateTask(
 ): Promise<Task> {
   const response = await api.put<Task>(`/tasks/${id}`, input)
   const parsed = parseApiBody<Task>(response.data)
-  return parsed ?? (response.data as Task)
+  return parsed ?? response.data
 }

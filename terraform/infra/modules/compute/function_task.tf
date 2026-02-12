@@ -126,3 +126,39 @@ module "api_update_task" {
   }
 }
 
+module "api_list_users" {
+  source  = "terraform-aws-modules/lambda/aws"
+  version = "7.2.0"
+
+  function_name = "${var.project_name}-api-list-users"
+  handler       = local.binary_name
+  runtime       = "provided.al2023"
+  architectures = ["arm64"]
+
+  create_package = true
+  store_on_s3    = true
+  s3_bucket      = var.artifact_bucket_id
+
+  source_path = [
+    {
+      path     = "${var.source_dir}/api-user-list"
+      commands = [local.build_command, ":zip"]
+      patterns = [".*\\.go"]
+    }
+  ]
+
+  attach_policy_json = true
+  policy_json = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["dynamodb:Scan"]
+      Resource = var.dynamodb_table_arn
+    }]
+  })
+
+  environment_variables = {
+    TABLE_NAME = var.dynamodb_table_id
+  }
+}
+

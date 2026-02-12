@@ -21,6 +21,14 @@ output "update_task_function_name" {
   value = module.api_update_task.lambda_function_name
 }
 
+output "list_users_invoke_arn" {
+  value = module.api_list_users.lambda_function_invoke_arn
+}
+
+output "list_users_function_name" {
+  value = module.api_list_users.lambda_function_name
+}
+
 output "auth_pre_sign_up_arn" {
   value = module.auth_pre_sign_up.lambda_function_arn
 }

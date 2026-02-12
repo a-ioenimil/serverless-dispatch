@@ -105,3 +105,29 @@ resource "aws_lambda_permission" "update_task" {
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/PUT/tasks/*"
 }
+
+# -----------------------------------------------------------------------------
+# Route: Get Users (GET /users)
+# -----------------------------------------------------------------------------
+resource "aws_apigatewayv2_integration" "get_users" {
+  api_id                 = aws_apigatewayv2_api.http_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = var.list_users_invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "get_users" {
+  api_id             = aws_apigatewayv2_api.http_api.id
+  route_key          = "GET /users"
+  target             = "integrations/${aws_apigatewayv2_integration.get_users.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+}
+
+resource "aws_lambda_permission" "get_users" {
+  statement_id  = "AllowExecutionFromAPIGateway-GetUsers"
+  action        = "lambda:InvokeFunction"
+  function_name = var.list_users_function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/GET/users"
+}

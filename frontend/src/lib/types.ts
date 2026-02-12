@@ -24,3 +24,11 @@ export interface UpdateTaskInput {
   priority?: TaskPriority
   assignee_id?: string | null
 }
+
+export interface UserSummary {
+  id: string
+  username: string
+  email: string
+  role?: string
+  status?: string
+}

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { AxiosRequestHeaders } from 'axios'
 import { getStoredTokens } from './auth'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined
@@ -19,7 +20,7 @@ api.interceptors.request.use((config) => {
     config.headers = {
       ...config.headers,
       Authorization: `Bearer ${tokens.accessToken}`,
-    }
+    } as AxiosRequestHeaders
   }
 
   return config

@@ -7,7 +7,7 @@ export function getContext() {
         staleTime: 15000,
         refetchOnWindowFocus: false,
         retry: (failureCount, error) => {
-          const status = (error as { response?: { status?: number } })?.response
+          const status = (error as { response?: { status?: number } }).response
             ?.status
           if (!status) {
             return failureCount < 2
@@ -18,7 +18,7 @@ export function getContext() {
       },
       mutations: {
         retry: (failureCount, error) => {
-          const status = (error as { response?: { status?: number } })?.response
+          const status = (error as { response?: { status?: number } }).response
             ?.status
           if (!status) {
             return failureCount < 1

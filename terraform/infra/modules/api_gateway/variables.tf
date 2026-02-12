@@ -37,3 +37,11 @@ variable "update_task_function_name" {
 variable "update_task_invoke_arn" {
   type = string
 }
+
+variable "list_users_function_name" {
+  type = string
+}
+
+variable "list_users_invoke_arn" {
+  type = string
+}
