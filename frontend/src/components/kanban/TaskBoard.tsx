@@ -581,175 +581,178 @@ export function TaskBoard() {
                                       className="contents"
                                     >
                                       <div className="flex items-start gap-3">
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span
-                                            aria-label="Drag task"
-                                            className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-amber-100/70 transition duration-100 hover:text-amber-100"
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <span
+                                              aria-label="Drag task"
+                                              className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-amber-100/70 transition duration-100 hover:text-amber-100"
+                                            >
+                                              <GripVertical className="h-4 w-4" />
+                                            </span>
+                                          </TooltipTrigger>
+                                          <TooltipContent
+                                            side="top"
+                                            className="border-white/10 bg-black/90 text-amber-100/80"
                                           >
-                                            <GripVertical className="h-4 w-4" />
-                                          </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent
-                                          side="top"
-                                          className="border-white/10 bg-black/90 text-amber-100/80"
-                                        >
-                                          Drag to reorder
-                                        </TooltipContent>
-                                      </Tooltip>
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between gap-2">
-                                          <h3 className="text-sm font-medium text-amber-100">
-                                            {task.title}
-                                          </h3>
-                                          <span
-                                            className={cn(
-                                              'rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.2em]',
-                                              priorityTone[task.priority],
-                                            )}
-                                          >
-                                            {task.priority}
-                                          </span>
-                                        </div>
-                                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-200/50">
-                                          <span className="shrink-0">
-                                            Owner{' '}
-                                            {resolveUsername(task.created_by)}
-                                          </span>
-                                          <span className="h-1 w-1 rounded-full bg-white/20" />
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <span
-                                                className="max-w-[120px] truncate"
-                                                aria-label={`Assignee ${resolveUsername(task.assignee_id)}`}
+                                            Drag to reorder
+                                          </TooltipContent>
+                                        </Tooltip>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center justify-between gap-2">
+                                            <h3 className="text-sm font-medium text-amber-100">
+                                              {task.title}
+                                            </h3>
+                                            <span
+                                              className={cn(
+                                                'rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.2em]',
+                                                priorityTone[task.priority],
+                                              )}
+                                            >
+                                              {task.priority}
+                                            </span>
+                                          </div>
+                                          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-200/50">
+                                            <span className="shrink-0">
+                                              Owner{' '}
+                                              {resolveUsername(task.created_by)}
+                                            </span>
+                                            <span className="h-1 w-1 rounded-full bg-white/20" />
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <span
+                                                  className="max-w-[120px] truncate"
+                                                  aria-label={`Assignee ${resolveUsername(task.assignee_id)}`}
+                                                >
+                                                  Assignee{' '}
+                                                  {resolveUsername(
+                                                    task.assignee_id,
+                                                  ).length > 12
+                                                    ? `${resolveUsername(task.assignee_id).slice(0, 12)}...`
+                                                    : resolveUsername(
+                                                        task.assignee_id,
+                                                      )}
+                                                </span>
+                                              </TooltipTrigger>
+                                              <TooltipContent
+                                                side="top"
+                                                className="border-white/10 bg-black/90 text-amber-100/80"
                                               >
-                                                Assignee{' '}
                                                 {resolveUsername(
                                                   task.assignee_id,
-                                                ).length > 12
-                                                  ? `${resolveUsername(task.assignee_id).slice(0, 12)}...`
-                                                  : resolveUsername(
-                                                      task.assignee_id,
-                                                    )}
-                                              </span>
-                                            </TooltipTrigger>
-                                            <TooltipContent
-                                              side="top"
-                                              className="border-white/10 bg-black/90 text-amber-100/80"
-                                            >
-                                              {resolveUsername(
-                                                task.assignee_id,
-                                              )}
-                                            </TooltipContent>
-                                          </Tooltip>
-                                          <span className="h-1 w-1 rounded-full bg-white/20" />
-                                          <span className="shrink-0">
-                                            {new Date(
-                                              task.created_at,
-                                            ).toLocaleDateString()}
-                                          </span>
-                                        </div>
-                                        {isAdmin && (
-                                          <div className="mt-3 flex items-center gap-2">
-                                            <Select
-                                              value={
-                                                task.assignee_id ??
-                                                unassignedValue
-                                              }
-                                              onValueChange={(value) => {
-                                                const nextAssignee =
-                                                  value === unassignedValue
-                                                    ? null
-                                                    : value
-                                                const currentAssignee =
-                                                  task.assignee_id ?? null
-                                                if (
-                                                  nextAssignee !==
-                                                    currentAssignee &&
-                                                  !updateMutation.isPending
-                                                ) {
-                                                  updateMutation.mutate({
-                                                    id: task.id,
-                                                    input: {
-                                                      assignee_id: nextAssignee,
-                                                    },
-                                                  })
-                                                }
-                                              }}
-                                            >
-                                              <SelectTrigger className="h-8 w-36 border-white/10 bg-black/30 px-2 text-[10px] uppercase tracking-[0.12em] text-amber-100/80">
-                                                <SelectValue placeholder="Assignee" />
-                                              </SelectTrigger>
-                                              <SelectContent className="border-white/10 bg-black/90 text-amber-50">
-                                                <SelectItem
-                                                  value={unassignedValue}
-                                                >
-                                                  Unassigned
-                                                </SelectItem>
-                                                {users.map(
-                                                  (userItem: UserSummary) => (
-                                                    <SelectItem
-                                                      key={userItem.id}
-                                                      value={userItem.username}
-                                                    >
-                                                      {userItem.username}
-                                                    </SelectItem>
-                                                  ),
                                                 )}
-                                              </SelectContent>
-                                            </Select>
-                                            <Select
-                                              value={task.priority}
-                                              onValueChange={(value) => {
-                                                const nextPriority =
-                                                  value as TaskPriority
-                                                if (
-                                                  nextPriority !==
-                                                    task.priority &&
-                                                  !updateMutation.isPending
-                                                ) {
-                                                  updateMutation.mutate({
-                                                    id: task.id,
-                                                    input: {
-                                                      priority: nextPriority,
-                                                    },
-                                                  })
-                                                }
-                                              }}
-                                            >
-                                              <SelectTrigger className="h-8 w-30 border-white/10 bg-black/30 px-2 text-[10px] uppercase tracking-[0.12em] text-amber-100/80">
-                                                <SelectValue placeholder="Priority" />
-                                              </SelectTrigger>
-                                              <SelectContent className="border-white/10 bg-black/90 text-amber-50">
-                                                <SelectItem value="LOW">
-                                                  Low
-                                                </SelectItem>
-                                                <SelectItem value="MEDIUM">
-                                                  Medium
-                                                </SelectItem>
-                                                <SelectItem value="HIGH">
-                                                  High
-                                                </SelectItem>
-                                              </SelectContent>
-                                            </Select>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                            <span className="h-1 w-1 rounded-full bg-white/20" />
+                                            <span className="shrink-0">
+                                              {new Date(
+                                                task.created_at,
+                                              ).toLocaleDateString()}
+                                            </span>
                                           </div>
-                                        )}
-                                      </div>
-                                      <Checkbox
-                                        checked={task.status === 'DONE'}
-                                        onCheckedChange={(checked) => {
-                                          const nextStatus =
-                                            checked === true ? 'DONE' : 'OPEN'
-                                          if (nextStatus !== task.status) {
-                                            updateMutation.mutate({
-                                              id: task.id,
-                                              input: { status: nextStatus },
-                                            })
-                                          }
-                                        }}
-                                        aria-label="Toggle done"
-                                        className="size-7 rounded-full border-white/10 bg-white/5 text-amber-100 shadow-none transition duration-100 hover:border-amber-200/60"
-                                      />
+                                          {isAdmin && (
+                                            <div className="mt-3 flex items-center gap-2">
+                                              <Select
+                                                value={
+                                                  task.assignee_id ??
+                                                  unassignedValue
+                                                }
+                                                onValueChange={(value) => {
+                                                  const nextAssignee =
+                                                    value === unassignedValue
+                                                      ? null
+                                                      : value
+                                                  const currentAssignee =
+                                                    task.assignee_id ?? null
+                                                  if (
+                                                    nextAssignee !==
+                                                      currentAssignee &&
+                                                    !updateMutation.isPending
+                                                  ) {
+                                                    updateMutation.mutate({
+                                                      id: task.id,
+                                                      input: {
+                                                        assignee_id:
+                                                          nextAssignee,
+                                                      },
+                                                    })
+                                                  }
+                                                }}
+                                              >
+                                                <SelectTrigger className="h-8 w-36 border-white/10 bg-black/30 px-2 text-[10px] uppercase tracking-[0.12em] text-amber-100/80">
+                                                  <SelectValue placeholder="Assignee" />
+                                                </SelectTrigger>
+                                                <SelectContent className="border-white/10 bg-black/90 text-amber-50">
+                                                  <SelectItem
+                                                    value={unassignedValue}
+                                                  >
+                                                    Unassigned
+                                                  </SelectItem>
+                                                  {users.map(
+                                                    (userItem: UserSummary) => (
+                                                      <SelectItem
+                                                        key={userItem.id}
+                                                        value={
+                                                          userItem.username
+                                                        }
+                                                      >
+                                                        {userItem.username}
+                                                      </SelectItem>
+                                                    ),
+                                                  )}
+                                                </SelectContent>
+                                              </Select>
+                                              <Select
+                                                value={task.priority}
+                                                onValueChange={(value) => {
+                                                  const nextPriority =
+                                                    value as TaskPriority
+                                                  if (
+                                                    nextPriority !==
+                                                      task.priority &&
+                                                    !updateMutation.isPending
+                                                  ) {
+                                                    updateMutation.mutate({
+                                                      id: task.id,
+                                                      input: {
+                                                        priority: nextPriority,
+                                                      },
+                                                    })
+                                                  }
+                                                }}
+                                              >
+                                                <SelectTrigger className="h-8 w-30 border-white/10 bg-black/30 px-2 text-[10px] uppercase tracking-[0.12em] text-amber-100/80">
+                                                  <SelectValue placeholder="Priority" />
+                                                </SelectTrigger>
+                                                <SelectContent className="border-white/10 bg-black/90 text-amber-50">
+                                                  <SelectItem value="LOW">
+                                                    Low
+                                                  </SelectItem>
+                                                  <SelectItem value="MEDIUM">
+                                                    Medium
+                                                  </SelectItem>
+                                                  <SelectItem value="HIGH">
+                                                    High
+                                                  </SelectItem>
+                                                </SelectContent>
+                                              </Select>
+                                            </div>
+                                          )}
+                                        </div>
+                                        <Checkbox
+                                          checked={task.status === 'DONE'}
+                                          onCheckedChange={(checked) => {
+                                            const nextStatus =
+                                              checked === true ? 'DONE' : 'OPEN'
+                                            if (nextStatus !== task.status) {
+                                              updateMutation.mutate({
+                                                id: task.id,
+                                                input: { status: nextStatus },
+                                              })
+                                            }
+                                          }}
+                                          aria-label="Toggle done"
+                                          className="size-7 rounded-full border-white/10 bg-white/5 text-amber-100 shadow-none transition duration-100 hover:border-amber-200/60"
+                                        />
                                       </div>
                                     </div>
                                   </motion.article>
