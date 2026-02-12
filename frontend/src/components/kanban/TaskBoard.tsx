@@ -37,6 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select'
+import { ScrollArea } from '../ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { cn } from '../../lib/utils'
 import { createTask, listTasks, updateTask } from '../../lib/tasks'
@@ -449,10 +450,8 @@ export function TaskBoard() {
               <Droppable key={column.id} droppableId={column.id}>
                 {(provided, snapshot) => (
                   <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
                     className={cn(
-                      'flex min-h-105 flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-4 transition duration-100',
+                      'flex h-[70vh] min-h-105 flex-col gap-4 overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-4 transition duration-100',
                       snapshot.isDraggingOver &&
                         'border-amber-200/40 bg-amber-200/10',
                     )}
@@ -474,7 +473,14 @@ export function TaskBoard() {
                       </div>
                     </div>
 
-                    <div className="flex flex-1 flex-col gap-3">
+                    <ScrollArea
+                      className="scroll-area-minimal min-h-0 flex-1"
+                      viewportClassName="flex min-h-0 flex-col gap-3 pb-6 pr-2"
+                      viewportProps={{
+                        ref: provided.innerRef,
+                        ...provided.droppableProps,
+                      }}
+                    >
                       {isInitialLoading
                         ? Array.from({ length: 3 }).map((_, index) => (
                             <div
@@ -563,7 +569,7 @@ export function TaskBoard() {
                             </Draggable>
                           ))}
                       {provided.placeholder}
-                    </div>
+                    </ScrollArea>
                   </div>
                 )}
               </Droppable>

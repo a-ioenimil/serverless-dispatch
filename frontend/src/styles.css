@@ -155,3 +155,20 @@ code {
     min-height: 100vh;
   }
 }
+
+.scroll-area-minimal [data-slot='scroll-area-viewport'] {
+  scroll-padding: 16px;
+}
+
+.scroll-area-minimal [data-slot='scroll-area-scrollbar'] {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.scroll-area-minimal:hover [data-slot='scroll-area-scrollbar'] {
+  opacity: 1;
+}
+
+.scroll-area-minimal [data-slot='scroll-area-thumb'] {
+  background: oklch(0.65 0.02 85 / 0.5);
+}
