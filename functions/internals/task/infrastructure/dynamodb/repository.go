@@ -146,6 +146,34 @@ func (r *DynamoDBTaskRepository) ListAll(ctx context.Context) ([]domain.Task, er
 	return tasks, nil
 }
 
+func (r *DynamoDBTaskRepository) ListUnassigned(ctx context.Context) ([]domain.Task, error) {
+	// SCAN Operation: Warning - expensive on large tables.
+	out, err := r.client.Scan(ctx, &dynamodb.ScanInput{
+		TableName: aws.String(r.tableName),
+		FilterExpression: aws.String(
+			"begins_with(PK, :pk_prefix) AND SK = :sk_meta AND attribute_not_exists(assignee_id)",
+		),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":pk_prefix": &types.AttributeValueMemberS{Value: "TASK#"},
+			":sk_meta":   &types.AttributeValueMemberS{Value: "METADATA"},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan unassigned tasks: %w", err)
+	}
+
+	tasks := make([]domain.Task, 0, len(out.Items))
+	for _, item := range out.Items {
+		var metadata Metadata
+		if err := attributevalue.UnmarshalMap(item, &metadata); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal task: %w", err)
+		}
+		tasks = append(tasks, metadata.Data)
+	}
+
+	return tasks, nil
+}
+
 func (r *DynamoDBTaskRepository) Update(ctx context.Context, task *domain.Task) error {
 	// Re-save for now (since PutItem overwrites).
 	// In production, we might want strict conditional updates.

@@ -75,12 +75,12 @@ func extractAuth(request events.APIGatewayV2HTTPRequest) (string, string) {
 	userRole := "MEMBER"
 
 	if request.RequestContext.Authorizer.JWT.Claims != nil {
-		if username, ok := request.RequestContext.Authorizer.JWT.Claims["preferred_username"]; ok && strings.TrimSpace(username) != "" {
+		if sub, ok := request.RequestContext.Authorizer.JWT.Claims["sub"]; ok && strings.TrimSpace(sub) != "" {
+			userID = sub
+		} else if username, ok := request.RequestContext.Authorizer.JWT.Claims["preferred_username"]; ok && strings.TrimSpace(username) != "" {
 			userID = username
 		} else if cognitoUsername, ok := request.RequestContext.Authorizer.JWT.Claims["cognito:username"]; ok && strings.TrimSpace(cognitoUsername) != "" {
 			userID = cognitoUsername
-		} else if sub, ok := request.RequestContext.Authorizer.JWT.Claims["sub"]; ok {
-			userID = sub
 		}
 		if groups, ok := request.RequestContext.Authorizer.JWT.Claims["cognito:groups"]; ok {
 			if strings.Contains(groups, "Admins") {

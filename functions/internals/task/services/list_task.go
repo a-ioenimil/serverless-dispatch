@@ -22,12 +22,30 @@ func (s *TaskService) ListTasks(ctx context.Context, userRole string, userID str
 		return tasks, nil
 	}
 
-	// Default to Member view
-	tasks, err := s.repo.ListByAssignee(ctx, userID)
+	assignedTasks, err := s.repo.ListByAssignee(ctx, userID)
 	if err != nil {
 		slog.Error("Failed to list assigned tasks", "user_id", userID, "error", err)
 		return nil, fmt.Errorf("failed to list assigned tasks: %w", err)
 	}
 
-	return tasks, nil
+	unassignedTasks, err := s.repo.ListUnassigned(ctx)
+	if err != nil {
+		slog.Error("Failed to list unassigned tasks", "error", err)
+		return nil, fmt.Errorf("failed to list unassigned tasks: %w", err)
+	}
+
+	combined := make(map[string]domain.Task, len(assignedTasks)+len(unassignedTasks))
+	for _, task := range assignedTasks {
+		combined[task.ID] = task
+	}
+	for _, task := range unassignedTasks {
+		combined[task.ID] = task
+	}
+
+	result := make([]domain.Task, 0, len(combined))
+	for _, task := range combined {
+		result = append(result, task)
+	}
+
+	return result, nil
 }

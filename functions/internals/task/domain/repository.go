@@ -7,6 +7,7 @@ type TaskRepository interface {
 	Save(ctx context.Context, task *Task) error
 	GetByID(ctx context.Context, id string) (*Task, error)
 	ListByAssignee(ctx context.Context, assigneeID string) ([]Task, error)
+	ListUnassigned(ctx context.Context) ([]Task, error)
 	ListAll(ctx context.Context) ([]Task, error)
 	Update(ctx context.Context, task *Task) error
 }
