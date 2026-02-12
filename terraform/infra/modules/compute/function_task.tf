@@ -68,7 +68,7 @@ module "api_get_task" {
     Version = "2012-10-17"
     Statement = [{
       Effect = "Allow"
-      Action = ["dynamodb:GetItem", "dynamodb:Query"]
+      Action = ["dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan"]
       Resource = [
         var.dynamodb_table_arn,
         "${var.dynamodb_table_arn}/index/GSI1"
