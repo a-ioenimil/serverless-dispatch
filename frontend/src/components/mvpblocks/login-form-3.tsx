@@ -17,9 +17,11 @@ import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
 import { Input } from '../ui/input'
 import { signIn } from '../../lib/auth'
+import { useAuth } from '../../integrations/auth/auth-context'
 
 export default function SignInPage() {
   const navigate = useNavigate()
+  const { syncFromStorage } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -31,6 +33,7 @@ export default function SignInPage() {
 
     try {
       await signIn(email, password)
+      syncFromStorage()
       toast.success('Signed in successfully')
 
       // Navigate to dashboard

@@ -6,6 +6,7 @@ import {
   ReactNode,
 } from 'react'
 import {
+  deriveUserFromTokens,
   getStoredTokens,
   getStoredUser,
   signOut as signOutAuth,
@@ -19,6 +20,7 @@ interface AuthContextType {
   isLoading: boolean
   isAuthenticated: boolean
   signOut: () => void
+  syncFromStorage: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -28,24 +30,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [tokens, setTokens] = useState<AuthTokens | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Initialize auth state from localStorage
-  useEffect(() => {
+  const syncFromStorage = () => {
     const storedTokens = getStoredTokens()
     const storedUser = getStoredUser()
 
     if (storedTokens && storedUser) {
-      // Check if token is expired
       if (isTokenExpired(storedTokens.accessToken)) {
-        // Token expired, clear storage
         signOutAuth()
         setUser(null)
         setTokens(null)
-      } else {
-        setTokens(storedTokens)
-        setUser(storedUser)
+        return
       }
+
+      setTokens(storedTokens)
+      setUser(storedUser)
+      return
     }
 
+    if (storedTokens) {
+      if (isTokenExpired(storedTokens.accessToken)) {
+        signOutAuth()
+        setUser(null)
+        setTokens(null)
+        return
+      }
+
+      const derivedUser = deriveUserFromTokens(storedTokens)
+      setTokens(storedTokens)
+      setUser(derivedUser)
+      return
+    }
+
+    setUser(null)
+    setTokens(null)
+  }
+
+  // Initialize auth state from localStorage
+  useEffect(() => {
+    syncFromStorage()
     setIsLoading(false)
   }, [])
 
@@ -63,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAuthenticated: !!tokens?.accessToken && !!user,
         signOut: handleSignOut,
+        syncFromStorage,
       }}
     >
       {children}

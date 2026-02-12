@@ -168,26 +168,48 @@ export async function resendSignUpCode(
   }
 }
 
-/**
- * Extract user info from ID token
- */
-function extractUserFromToken(token: string): AuthUser | null {
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
     const parts = token.split('.')
     if (parts.length !== 3) return null
 
-    const decoded = JSON.parse(atob(parts[1]))
+    const payload = parts[1]
+      .replace(/-/g, '+')
+      .replace(/_/g, '/')
+      .padEnd(Math.ceil(parts[1].length / 4) * 4, '=')
 
-    return {
-      id: decoded.sub || '',
-      email: decoded.email || '',
-      groups: decoded['cognito:groups']
-        ? decoded['cognito:groups'].split(',')
-        : [],
-    }
+    return JSON.parse(atob(payload)) as Record<string, unknown>
   } catch {
     return null
   }
+}
+
+/**
+ * Extract user info from ID token
+ */
+export function extractUserFromToken(token: string): AuthUser | null {
+  const decoded = decodeJwtPayload(token)
+  if (!decoded) return null
+
+  const groupsValue = decoded['cognito:groups']
+  const groups = Array.isArray(groupsValue)
+    ? groupsValue.filter(Boolean).map(String)
+    : typeof groupsValue === 'string'
+      ? groupsValue.split(',')
+      : []
+
+  return {
+    id: String(decoded.sub || ''),
+    email: String(decoded.email || ''),
+    groups,
+  }
+}
+
+export function deriveUserFromTokens(
+  tokens: AuthTokens | null,
+): AuthUser | null {
+  if (!tokens?.idToken) return null
+  return extractUserFromToken(tokens.idToken)
 }
 
 /**
@@ -203,7 +225,10 @@ export function getStoredTokens(): AuthTokens | null {
  */
 export function getStoredUser(): AuthUser | null {
   const stored = localStorage.getItem(USER_STORAGE_KEY)
-  return stored ? JSON.parse(stored) : null
+  if (stored) return JSON.parse(stored)
+
+  const tokens = getStoredTokens()
+  return deriveUserFromTokens(tokens)
 }
 
 /**
@@ -226,14 +251,9 @@ export function isAuthenticated(): boolean {
  * Check if token is expired
  */
 export function isTokenExpired(token: string): boolean {
-  try {
-    const parts = token.split('.')
-    if (parts.length !== 3) return true
+  const decoded = decodeJwtPayload(token)
+  if (!decoded || typeof decoded.exp !== 'number') return true
 
-    const decoded = JSON.parse(atob(parts[1]))
-    const expiresAt = decoded.exp * 1000 // Convert to milliseconds
-    return Date.now() >= expiresAt
-  } catch {
-    return true
-  }
+  const expiresAt = decoded.exp * 1000 // Convert to milliseconds
+  return Date.now() >= expiresAt
 }
