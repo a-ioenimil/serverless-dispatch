@@ -42,7 +42,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { cn } from '../../lib/utils'
 import { createTask, listTasks, updateTask } from '../../lib/tasks'
 import type { SubmitEvent } from 'react'
-import type { DropResult } from '@hello-pangea/dnd'
+import type { DragStart, DropResult } from '@hello-pangea/dnd'
 import type {
   CreateTaskInput,
   Task,
@@ -100,6 +100,7 @@ export function TaskBoard() {
   const [title, setTitle] = useState('')
   const [priority, setPriority] = useState<TaskPriority>('MEDIUM')
   const [orderByStatus, setOrderByStatus] = useState(emptyOrder)
+  const [activeDragId, setActiveDragId] = useState<string | null>(null)
 
   const tasksQuery = useQuery({
     queryKey: ['tasks'],
@@ -258,8 +259,13 @@ export function TaskBoard() {
     setTitle('')
   }
 
+  const handleDragStart = (start: DragStart) => {
+    setActiveDragId(start.draggableId)
+  }
+
   const handleDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result
+    setActiveDragId(null)
     if (!destination) return
 
     const sourceStatus = source.droppableId as TaskStatus
@@ -440,7 +446,7 @@ export function TaskBoard() {
         </div>
       )}
 
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <section className="grid gap-6 md:grid-cols-3">
           {columnMeta.map((column) => {
             const ColumnIcon = column.icon
@@ -488,86 +494,104 @@ export function TaskBoard() {
                               className="h-24 animate-pulse rounded-2xl border border-white/10 bg-white/5"
                             />
                           ))
-                        : columnTasks.map((task, index) => (
-                            <Draggable
-                              key={task.id}
-                              draggableId={task.id}
-                              index={index}
-                            >
-                              {(dragProvided, dragSnapshot) => (
-                                <motion.article
-                                  ref={dragProvided.innerRef}
-                                  {...dragProvided.draggableProps}
-                                  layout
-                                  whileHover={{ y: -2 }}
-                                  className={cn(
-                                    'group rounded-2xl border border-white/10 bg-black/40 p-4 shadow-[0_10px_40px_rgba(10,10,14,0.35)] transition duration-100 hover:border-amber-200/40',
-                                    dragSnapshot.isDragging &&
-                                      'border-amber-200/60 bg-black/70',
-                                  )}
-                                >
-                                  <div className="flex items-start gap-3">
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <span
-                                          {...dragProvided.dragHandleProps}
-                                          aria-label="Drag task"
-                                          className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-amber-100/70 transition duration-100 hover:text-amber-100"
+                        : columnTasks.map((task, index) => {
+                            const isActive = activeDragId === task.id
+                            const shouldBlur =
+                              Boolean(activeDragId) && !isActive
+
+                            return (
+                              <Draggable
+                                key={task.id}
+                                draggableId={task.id}
+                                index={index}
+                              >
+                                {(dragProvided, dragSnapshot) => (
+                                  <motion.article
+                                    ref={dragProvided.innerRef}
+                                    {...dragProvided.draggableProps}
+                                    {...dragProvided.dragHandleProps}
+                                    layout
+                                    whileHover={{ y: -2 }}
+                                    animate={{
+                                      filter: shouldBlur
+                                        ? 'blur(2px) saturate(0.85)'
+                                        : 'blur(0px) saturate(1)',
+                                      opacity: shouldBlur ? 0.8 : 1,
+                                      scale: isActive ? 1.02 : 1,
+                                    }}
+                                    transition={{
+                                      duration: 0.12,
+                                      ease: 'easeOut',
+                                    }}
+                                    style={{ willChange: 'transform, filter' }}
+                                    className={cn(
+                                      'group transform-gpu rounded-2xl border border-white/10 bg-black/40 p-4 shadow-[0_10px_40px_rgba(10,10,14,0.35)] transition duration-100 hover:border-amber-200/40',
+                                      dragSnapshot.isDragging &&
+                                        'border-amber-200/60 bg-black/70',
+                                    )}
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span
+                                            aria-label="Drag task"
+                                            className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-amber-100/70 transition duration-100 hover:text-amber-100"
+                                          >
+                                            <GripVertical className="h-4 w-4" />
+                                          </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent
+                                          side="top"
+                                          className="border-white/10 bg-black/90 text-amber-100/80"
                                         >
-                                          <GripVertical className="h-4 w-4" />
-                                        </span>
-                                      </TooltipTrigger>
-                                      <TooltipContent
-                                        side="top"
-                                        className="border-white/10 bg-black/90 text-amber-100/80"
-                                      >
-                                        Drag to reorder
-                                      </TooltipContent>
-                                    </Tooltip>
-                                    <div className="flex-1">
-                                      <div className="flex items-center justify-between gap-2">
-                                        <h3 className="text-sm font-medium text-amber-100">
-                                          {task.title}
-                                        </h3>
-                                        <span
-                                          className={cn(
-                                            'rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.2em]',
-                                            priorityTone[task.priority],
-                                          )}
-                                        >
-                                          {task.priority}
-                                        </span>
+                                          Drag to reorder
+                                        </TooltipContent>
+                                      </Tooltip>
+                                      <div className="flex-1">
+                                        <div className="flex items-center justify-between gap-2">
+                                          <h3 className="text-sm font-medium text-amber-100">
+                                            {task.title}
+                                          </h3>
+                                          <span
+                                            className={cn(
+                                              'rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.2em]',
+                                              priorityTone[task.priority],
+                                            )}
+                                          >
+                                            {task.priority}
+                                          </span>
+                                        </div>
+                                        <div className="mt-2 flex items-center gap-3 text-xs text-slate-200/50">
+                                          <span>Owner {task.created_by}</span>
+                                          <span className="h-1 w-1 rounded-full bg-white/20" />
+                                          <span>
+                                            {new Date(
+                                              task.created_at,
+                                            ).toLocaleDateString()}
+                                          </span>
+                                        </div>
                                       </div>
-                                      <div className="mt-2 flex items-center gap-3 text-xs text-slate-200/50">
-                                        <span>Owner {task.created_by}</span>
-                                        <span className="h-1 w-1 rounded-full bg-white/20" />
-                                        <span>
-                                          {new Date(
-                                            task.created_at,
-                                          ).toLocaleDateString()}
-                                        </span>
-                                      </div>
+                                      <Checkbox
+                                        checked={task.status === 'DONE'}
+                                        onCheckedChange={(checked) => {
+                                          const nextStatus =
+                                            checked === true ? 'DONE' : 'OPEN'
+                                          if (nextStatus !== task.status) {
+                                            updateMutation.mutate({
+                                              id: task.id,
+                                              input: { status: nextStatus },
+                                            })
+                                          }
+                                        }}
+                                        aria-label="Toggle done"
+                                        className="size-7 rounded-full border-white/10 bg-white/5 text-amber-100 shadow-none transition duration-100 hover:border-amber-200/60"
+                                      />
                                     </div>
-                                    <Checkbox
-                                      checked={task.status === 'DONE'}
-                                      onCheckedChange={(checked) => {
-                                        const nextStatus =
-                                          checked === true ? 'DONE' : 'OPEN'
-                                        if (nextStatus !== task.status) {
-                                          updateMutation.mutate({
-                                            id: task.id,
-                                            input: { status: nextStatus },
-                                          })
-                                        }
-                                      }}
-                                      aria-label="Toggle done"
-                                      className="size-7 rounded-full border-white/10 bg-white/5 text-amber-100 shadow-none transition duration-100 hover:border-amber-200/60"
-                                    />
-                                  </div>
-                                </motion.article>
-                              )}
-                            </Draggable>
-                          ))}
+                                  </motion.article>
+                                )}
+                              </Draggable>
+                            )
+                          })}
                       {provided.placeholder}
                     </ScrollArea>
                   </div>
