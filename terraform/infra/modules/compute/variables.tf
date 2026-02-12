@@ -44,6 +44,12 @@ variable "region" {
   type        = string
 }
 
+variable "user_pool_id" {
+  description = "Cognito User Pool ID for lambdas that resolve users/groups."
+  type        = string
+  default     = ""
+}
+
 variable "app_version" {
   description = "The version of the app artifacts. If null, builds locally."
   type        = string

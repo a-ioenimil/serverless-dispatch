@@ -56,7 +56,8 @@ module "async_notifier" {
   })
 
   environment_variables = {
-    FROM_EMAIL = "notifications@amalitech.com" # Placeholder
+    FROM_EMAIL   = "notifications@amalitech.com" # Placeholder
+    USER_POOL_ID = var.user_pool_id
   }
 }
 

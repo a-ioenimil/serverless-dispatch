@@ -11,6 +11,7 @@ import {
   Mail,
   ShieldCheck,
   Sparkles,
+  User,
 } from 'lucide-react'
 
 import { Button } from '../ui/button'
@@ -21,6 +22,7 @@ import { signUp } from '../../lib/auth'
 export default function SignUpPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [acceptTerms, setAcceptTerms] = useState(false)
@@ -37,7 +39,7 @@ export default function SignUpPage() {
     setLoading(true)
 
     try {
-      await signUp(email, password)
+      await signUp(email, username.trim(), password)
       toast.success('Account created. Check your email to verify.')
       localStorage.setItem('pending_signup_email', email)
       const encodedEmail = encodeURIComponent(email)
@@ -156,6 +158,27 @@ export default function SignUpPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="username"
+                      className="text-xs uppercase tracking-[0.2em] text-amber-100/70"
+                    >
+                      Username
+                    </label>
+                    <div className="relative">
+                      <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-amber-100/40" />
+                      <Input
+                        id="username"
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        required
+                        placeholder="your.username"
+                        className="h-11 border-white/10 bg-black/40 pl-10 text-amber-50 placeholder:text-amber-100/30 focus-visible:ring-amber-200/30"
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <label
                       htmlFor="email"

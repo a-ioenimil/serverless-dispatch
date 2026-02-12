@@ -44,9 +44,13 @@ func handler(ctx context.Context, event events.CognitoEventUserPoolsPostConfirma
 	if event.TriggerSource == "PostConfirmation_ConfirmSignUp" {
 		email := event.Request.UserAttributes["email"]
 		sub := event.Request.UserAttributes["sub"] // Cognito User ID
+		username := event.Request.UserAttributes["preferred_username"]
 		// Fallback for sub if not in attr? Usually sub is standard.
 		if sub == "" {
 			sub = event.UserName // Sometimes UserName is the sub
+		}
+		if username == "" {
+			username = event.UserName
 		}
 
 		if email == "" || sub == "" {
@@ -54,12 +58,12 @@ func handler(ctx context.Context, event events.CognitoEventUserPoolsPostConfirma
 			return event, nil
 		}
 
-		err := userService.CreateUser(ctx, sub, email)
+		err := userService.CreateUser(ctx, sub, email, username)
 		if err != nil {
 			slog.Error("Failed to create user", "error", err)
 			return event, err
 		}
-		slog.Info("User created successfully", "id", sub)
+		slog.Info("User created successfully", "id", sub, "username", username)
 	}
 
 	return event, nil

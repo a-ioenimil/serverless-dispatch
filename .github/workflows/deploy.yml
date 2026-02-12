@@ -47,6 +47,8 @@ jobs:
     name: "Infrastructure Plan"
     needs: integration
     runs-on: ubuntu-latest
+    env:
+      TF_VAR_user_pool_id: ${{ secrets.COGNITO_USER_POOL_ID }}
     defaults:
       run:
         working-directory: terraform/infra
@@ -81,6 +83,13 @@ jobs:
       - name: Terraform Init
         run: terraform init -backend-config=dev.tfbackend
 
+      - name: Validate Required Terraform Vars
+        run: |
+          if [ -z "$TF_VAR_user_pool_id" ]; then
+            echo "Missing required secret: COGNITO_USER_POOL_ID"
+            exit 1
+          fi
+
       - name: Terraform Validate
         run: terraform validate
 
@@ -92,6 +101,8 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: infra-plan
     runs-on: ubuntu-latest
+    env:
+      TF_VAR_user_pool_id: ${{ secrets.COGNITO_USER_POOL_ID }}
     defaults:
       run:
         working-directory: terraform/infra
@@ -130,6 +141,13 @@ jobs:
 
       - name: Terraform Init
         run: terraform init -backend-config=dev.tfbackend
+
+      - name: Validate Required Terraform Vars
+        run: |
+          if [ -z "$TF_VAR_user_pool_id" ]; then
+            echo "Missing required secret: COGNITO_USER_POOL_ID"
+            exit 1
+          fi
 
       - name: Determine App Version
         id: version

@@ -98,6 +98,7 @@ export function TaskBoard() {
   const { user, signOut } = useAuth()
   const queryClient = useQueryClient()
   const [title, setTitle] = useState('')
+  const [assignee, setAssignee] = useState('')
   const [priority, setPriority] = useState<TaskPriority>('MEDIUM')
   const [orderByStatus, setOrderByStatus] = useState(emptyOrder)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
@@ -108,6 +109,7 @@ export function TaskBoard() {
   })
 
   const tasks = tasksQuery.data ?? []
+  const isAdmin = (user?.groups ?? []).includes('Admins')
   const tasksById = useMemo(
     () => new Map(tasks.map((task) => [task.id, task])),
     [tasks],
@@ -254,9 +256,11 @@ export function TaskBoard() {
       title: trimmed,
       priority,
       description: '',
+      assignee_id: isAdmin && assignee.trim() ? assignee.trim() : null,
     })
 
     setTitle('')
+    setAssignee('')
   }
 
   const handleDragStart = (start: DragStart) => {
@@ -424,6 +428,14 @@ export function TaskBoard() {
             <SelectItem value="HIGH">High</SelectItem>
           </SelectContent>
         </Select>
+        {isAdmin && (
+          <Input
+            value={assignee}
+            onChange={(event) => setAssignee(event.target.value)}
+            placeholder="Assign username"
+            className="h-10 max-w-40 rounded-full border-white/10 bg-black/30 text-xs uppercase tracking-[0.1em] text-amber-100 placeholder:text-amber-100/30 focus-visible:ring-amber-200/20"
+          />
+        )}
         <Button
           asChild
           className="rounded-full bg-amber-200/90 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-black hover:bg-amber-200"
@@ -565,11 +577,71 @@ export function TaskBoard() {
                                           <span>Owner {task.created_by}</span>
                                           <span className="h-1 w-1 rounded-full bg-white/20" />
                                           <span>
+                                            Assignee {task.assignee_id || 'Unassigned'}
+                                          </span>
+                                          <span className="h-1 w-1 rounded-full bg-white/20" />
+                                          <span>
                                             {new Date(
                                               task.created_at,
                                             ).toLocaleDateString()}
                                           </span>
                                         </div>
+                                        {isAdmin && (
+                                          <div className="mt-3 flex items-center gap-2">
+                                            <Input
+                                              defaultValue={task.assignee_id ?? ''}
+                                              onBlur={(event) => {
+                                                const nextAssignee =
+                                                  event.currentTarget.value.trim()
+                                                const currentAssignee =
+                                                  task.assignee_id ?? ''
+                                                if (
+                                                  nextAssignee !== currentAssignee &&
+                                                  !updateMutation.isPending
+                                                ) {
+                                                  updateMutation.mutate({
+                                                    id: task.id,
+                                                    input: {
+                                                      assignee_id:
+                                                        nextAssignee || null,
+                                                    },
+                                                  })
+                                                }
+                                              }}
+                                              placeholder="assignee username"
+                                              className="h-8 border-white/10 bg-black/30 text-[10px] uppercase tracking-[0.12em] text-amber-100 placeholder:text-amber-100/40 focus-visible:ring-amber-200/20"
+                                            />
+                                            <Select
+                                              value={task.priority}
+                                              onValueChange={(value) => {
+                                                const nextPriority =
+                                                  value as TaskPriority
+                                                if (
+                                                  nextPriority !== task.priority &&
+                                                  !updateMutation.isPending
+                                                ) {
+                                                  updateMutation.mutate({
+                                                    id: task.id,
+                                                    input: {
+                                                      priority: nextPriority,
+                                                    },
+                                                  })
+                                                }
+                                              }}
+                                            >
+                                              <SelectTrigger className="h-8 w-30 border-white/10 bg-black/30 px-2 text-[10px] uppercase tracking-[0.12em] text-amber-100/80">
+                                                <SelectValue placeholder="Priority" />
+                                              </SelectTrigger>
+                                              <SelectContent className="border-white/10 bg-black/90 text-amber-50">
+                                                <SelectItem value="LOW">Low</SelectItem>
+                                                <SelectItem value="MEDIUM">
+                                                  Medium
+                                                </SelectItem>
+                                                <SelectItem value="HIGH">High</SelectItem>
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                        )}
                                       </div>
                                       <Checkbox
                                         checked={task.status === 'DONE'}

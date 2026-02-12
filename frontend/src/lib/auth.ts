@@ -21,6 +21,7 @@ export interface AuthTokens {
 
 export interface AuthUser {
   id: string
+  username: string
   email: string
   groups: string[]
 }
@@ -92,6 +93,7 @@ export async function signIn(
  */
 export async function signUp(
   email: string,
+  username: string,
   password: string,
 ): Promise<SignUpResult> {
   try {
@@ -103,6 +105,10 @@ export async function signUp(
         {
           Name: 'email',
           Value: email,
+        },
+        {
+          Name: 'preferred_username',
+          Value: username,
         },
       ],
     })
@@ -200,6 +206,9 @@ export function extractUserFromToken(token: string): AuthUser | null {
 
   return {
     id: String(decoded.sub || ''),
+    username: String(
+      decoded.preferred_username || decoded['cognito:username'] || '',
+    ),
     email: String(decoded.email || ''),
     groups,
   }

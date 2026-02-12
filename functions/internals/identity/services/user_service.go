@@ -17,9 +17,10 @@ func NewUserService(repo ports.UserRepository) *UserService {
 }
 
 // CreateUser registers a new user in the system after Cognito verification
-func (s *UserService) CreateUser(ctx context.Context, id, email string) error {
+func (s *UserService) CreateUser(ctx context.Context, id, email, username string) error {
 	user := domain.User{
 		ID:        id,
+		Username:  username,
 		Email:     email,
 		Role:      domain.RoleMember, // Default role
 		Status:    "ACTIVE",

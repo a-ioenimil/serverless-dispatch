@@ -5,12 +5,14 @@ import (
 	"log/slog"
 	"os"
 
+	identitycognito "github.com/a-ioenimil/serverless-dispatch/functions/internals/identity/infrastructure/cognito"
 	"github.com/a-ioenimil/serverless-dispatch/functions/internals/notification/infrastructure/sender"
 	"github.com/a-ioenimil/serverless-dispatch/functions/internals/notification/ports"
 	"github.com/a-ioenimil/serverless-dispatch/functions/internals/notification/services"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
+	identityprovider "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/ses"
 )
 
@@ -42,7 +44,16 @@ func init() {
 		emailSender = sender.NewLoggerEmailSender()
 	}
 
-	notifierService = services.NewTaskNotifierService(emailSender)
+	var recipientResolver ports.RecipientResolver
+	userPoolID := os.Getenv("USER_POOL_ID")
+	if userPoolID != "" {
+		identityClient := identityprovider.NewFromConfig(cfg)
+		recipientResolver = identitycognito.NewUserDirectory(identityClient, userPoolID)
+	} else {
+		slog.Warn("USER_POOL_ID not set, recipient resolution by username will be disabled")
+	}
+
+	notifierService = services.NewTaskNotifierService(emailSender, recipientResolver)
 }
 
 // Handler uses the Internal Service to process events

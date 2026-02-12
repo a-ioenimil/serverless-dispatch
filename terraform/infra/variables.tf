@@ -33,3 +33,9 @@ variable "app_version" {
   type        = string
   default     = null
 }
+
+variable "user_pool_id" {
+  description = "Cognito User Pool ID injected into backend lambdas that need directory lookups."
+  type        = string
+  default     = ""
+}

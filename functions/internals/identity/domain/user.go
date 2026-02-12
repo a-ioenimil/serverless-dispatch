@@ -16,6 +16,7 @@ const (
 // User represents an authenticated entity in the system
 type User struct {
 	ID        string    `json:"id" dynamodbav:"pk"`
+	Username  string    `json:"username" dynamodbav:"username"`
 	Email     string    `json:"email" dynamodbav:"email"`
 	Role      Role      `json:"role" dynamodbav:"role"`
 	Status    string    `json:"status" dynamodbav:"status"`

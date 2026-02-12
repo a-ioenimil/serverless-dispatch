@@ -32,6 +32,7 @@ module "compute" {
   # Configuration
   allowed_email_domains = var.allowed_email_domains
   region                = var.region
+  user_pool_id          = var.user_pool_id
 
   # Point to the Go Source Code relative to the module
   source_dir = abspath("${path.module}/../../functions/cmd")
