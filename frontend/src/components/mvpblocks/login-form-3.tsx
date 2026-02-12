@@ -248,9 +248,7 @@ export default function SignInPage() {
                   </Link>
                 </div>
 
-                <div className="text-center text-xs text-amber-100/50">
-                  Cognito will verify your session before granting access.
-                </div>
+                
               </div>
             </div>
           </div>

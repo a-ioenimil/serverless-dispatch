@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"os"
 
@@ -10,12 +11,16 @@ import (
 	"github.com/a-ioenimil/serverless-dispatch/functions/internals/identity/services"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	db "github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/sns"
 )
 
 var (
-	userService *services.UserService
+	userService           *services.UserService
+	snsClient             *sns.Client
+	notificationsTopicARN string
 )
 
 func init() {
@@ -36,6 +41,9 @@ func init() {
 	client := db.NewFromConfig(cfg)
 	repo := dynamodb.NewDynamoDBUserRepository(client, tableName)
 	userService = services.NewUserService(repo)
+
+	snsClient = sns.NewFromConfig(cfg)
+	notificationsTopicARN = os.Getenv("NOTIFICATIONS_TOPIC_ARN")
 }
 
 func handler(ctx context.Context, event events.CognitoEventUserPoolsPostConfirmation) (events.CognitoEventUserPoolsPostConfirmation, error) {
@@ -64,9 +72,42 @@ func handler(ctx context.Context, event events.CognitoEventUserPoolsPostConfirma
 			return event, err
 		}
 		slog.Info("User created successfully", "id", sub, "username", username)
+
+		if notificationsTopicARN == "" {
+			slog.Warn("NOTIFICATIONS_TOPIC_ARN is empty, skipping notification subscription", "email", email)
+			return event, nil
+		}
+
+		if err := subscribeUserToNotifications(ctx, email); err != nil {
+			slog.Error("Failed to subscribe user to notifications", "error", err, "email", email)
+			return event, err
+		}
 	}
 
 	return event, nil
+}
+
+func subscribeUserToNotifications(ctx context.Context, email string) error {
+	filterPolicy, err := json.Marshal(map[string][]string{
+		"recipient": {email},
+		"channel":   {"email"},
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = snsClient.Subscribe(ctx, &sns.SubscribeInput{
+		TopicArn:              aws.String(notificationsTopicARN),
+		Protocol:              aws.String("email"),
+		Endpoint:              aws.String(email),
+		Attributes:            map[string]string{"FilterPolicy": string(filterPolicy)},
+		ReturnSubscriptionArn: true,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func main() {

@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	identityprovider "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
-	"github.com/aws/aws-sdk-go-v2/service/ses"
+	"github.com/aws/aws-sdk-go-v2/service/sns"
 )
 
 var (
@@ -33,14 +33,14 @@ func init() {
 	}
 
 	var emailSender ports.EmailSender
-	fromEmail := os.Getenv("FROM_EMAIL")
+	notificationsTopicARN := os.Getenv("NOTIFICATIONS_TOPIC_ARN")
 
-	if fromEmail != "" {
-		slog.Info("Initializing SES Sender", "from", fromEmail)
-		sesClient := ses.NewFromConfig(cfg)
-		emailSender = sender.NewSESSender(sesClient, fromEmail)
+	if notificationsTopicARN != "" {
+		slog.Info("Initializing SNS Sender", "topic_arn", notificationsTopicARN)
+		snsClient := sns.NewFromConfig(cfg)
+		emailSender = sender.NewSNSSender(snsClient, notificationsTopicARN)
 	} else {
-		slog.Warn("FROM_EMAIL not set, defaulting to Logger Sender")
+		slog.Warn("NOTIFICATIONS_TOPIC_ARN not set, defaulting to Logger Sender")
 		emailSender = sender.NewLoggerEmailSender()
 	}
 

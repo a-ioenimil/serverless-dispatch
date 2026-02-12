@@ -282,6 +282,7 @@ export function TaskBoard() {
 
   const handleCreate = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!isAdmin) return
     const trimmed = title.trim()
     if (!trimmed || createMutation.isPending) return
 
@@ -289,7 +290,7 @@ export function TaskBoard() {
       title: trimmed,
       priority,
       description: '',
-      assignee_id: isAdmin && assigneeId.trim() ? assigneeId.trim() : null,
+      assignee_id: assigneeId.trim() ? assigneeId.trim() : null,
     })
 
     setTitle('')
@@ -433,35 +434,35 @@ export function TaskBoard() {
         </div>
       </header>
 
-      <form
-        onSubmit={handleCreate}
-        className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4"
-      >
-        <div className="flex min-w-55 flex-1 items-center gap-3">
-          <span className="text-xs uppercase tracking-[0.2em] text-amber-100/60">
-            New task
-          </span>
-          <Input
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="Define the next move"
-            className="h-10 border-white/10 bg-black/30 text-sm text-amber-100 placeholder:text-amber-100/30 focus-visible:ring-amber-200/20"
-          />
-        </div>
-        <Select
-          value={priority}
-          onValueChange={(value) => setPriority(value as TaskPriority)}
+      {isAdmin && (
+        <form
+          onSubmit={handleCreate}
+          className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4"
         >
-          <SelectTrigger className="rounded-full border-white/10 bg-black/30 text-xs uppercase tracking-[0.2em] text-amber-100/80">
-            <SelectValue placeholder="Priority" />
-          </SelectTrigger>
-          <SelectContent className="border-white/10 bg-black/90 text-amber-50">
-            <SelectItem value="LOW">Low</SelectItem>
-            <SelectItem value="MEDIUM">Medium</SelectItem>
-            <SelectItem value="HIGH">High</SelectItem>
-          </SelectContent>
-        </Select>
-        {isAdmin && (
+          <div className="flex min-w-55 flex-1 items-center gap-3">
+            <span className="text-xs uppercase tracking-[0.2em] text-amber-100/60">
+              New task
+            </span>
+            <Input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Define the next move"
+              className="h-10 border-white/10 bg-black/30 text-sm text-amber-100 placeholder:text-amber-100/30 focus-visible:ring-amber-200/20"
+            />
+          </div>
+          <Select
+            value={priority}
+            onValueChange={(value) => setPriority(value as TaskPriority)}
+          >
+            <SelectTrigger className="rounded-full border-white/10 bg-black/30 text-xs uppercase tracking-[0.2em] text-amber-100/80">
+              <SelectValue placeholder="Priority" />
+            </SelectTrigger>
+            <SelectContent className="border-white/10 bg-black/90 text-amber-50">
+              <SelectItem value="LOW">Low</SelectItem>
+              <SelectItem value="MEDIUM">Medium</SelectItem>
+              <SelectItem value="HIGH">High</SelectItem>
+            </SelectContent>
+          </Select>
           <Select
             value={assigneeId || unassignedValue}
             onValueChange={(value) =>
@@ -480,22 +481,22 @@ export function TaskBoard() {
               ))}
             </SelectContent>
           </Select>
-        )}
-        <Button
-          asChild
-          className="rounded-full bg-amber-200/90 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-black hover:bg-amber-200"
-        >
-          <motion.button
-            type="submit"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className="flex items-center gap-2"
+          <Button
+            asChild
+            className="rounded-full bg-amber-200/90 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-black hover:bg-amber-200"
           >
-            <Plus className="h-4 w-4" />
-            Create
-          </motion.button>
-        </Button>
-      </form>
+            <motion.button
+              type="submit"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Create
+            </motion.button>
+          </Button>
+        </form>
+      )}
 
       {tasksQuery.isError && (
         <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">

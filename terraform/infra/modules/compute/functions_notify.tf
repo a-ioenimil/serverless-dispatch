@@ -27,7 +27,7 @@ module "async_notifier" {
     key    = "builds/${var.app_version}/async-notifier.zip"
   } : null
 
-  # Permission to read from DynamoDB Stream and Send Emails
+  # Permission to read from DynamoDB Stream and publish notifications
   attach_policy_json = true
   policy_json = jsonencode({
     Version = "2012-10-17"
@@ -44,8 +44,8 @@ module "async_notifier" {
       },
       {
         Effect   = "Allow"
-        Action   = ["ses:SendEmail", "ses:SendRawEmail"]
-        Resource = "*"
+        Action   = ["sns:Publish"]
+        Resource = aws_sns_topic.notifications.arn
       },
       {
         Effect   = "Allow"
@@ -56,9 +56,13 @@ module "async_notifier" {
   })
 
   environment_variables = {
-    FROM_EMAIL   = "notifications@amalitech.com" # Placeholder
-    USER_POOL_ID = var.user_pool_id
+    NOTIFICATIONS_TOPIC_ARN = aws_sns_topic.notifications.arn
+    USER_POOL_ID            = var.user_pool_id
   }
+}
+
+resource "aws_sns_topic" "notifications" {
+  name = "${var.project_name}-notifications"
 }
 
 resource "aws_lambda_event_source_mapping" "dynamodb_stream" {

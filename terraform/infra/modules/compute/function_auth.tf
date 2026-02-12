@@ -62,16 +62,28 @@ module "auth_post_confirmation" {
   } : null
 
   environment_variables = {
-    TABLE_NAME = var.dynamodb_table_id
+    TABLE_NAME              = var.dynamodb_table_id
+    NOTIFICATIONS_TOPIC_ARN = aws_sns_topic.notifications.arn
   }
 
   attach_policy_json = true
   policy_json = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = ["dynamodb:PutItem"]
-      Resource = var.dynamodb_table_arn
-    }]
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["dynamodb:PutItem"]
+        Resource = var.dynamodb_table_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "sns:Subscribe",
+          "sns:SetSubscriptionAttributes",
+          "sns:ListSubscriptionsByTopic"
+        ]
+        Resource = aws_sns_topic.notifications.arn
+      }
+    ]
   })
 }
