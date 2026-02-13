@@ -10,4 +10,5 @@ type TaskRepository interface {
 	ListUnassigned(ctx context.Context) ([]Task, error)
 	ListAll(ctx context.Context) ([]Task, error)
 	Update(ctx context.Context, task *Task) error
+	Delete(ctx context.Context, id string) error
 }

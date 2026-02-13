@@ -179,3 +179,21 @@ func (r *DynamoDBTaskRepository) Update(ctx context.Context, task *domain.Task) 
 	// In production, we might want strict conditional updates.
 	return r.Save(ctx, task)
 }
+
+func (r *DynamoDBTaskRepository) Delete(ctx context.Context, id string) error {
+	pk := fmt.Sprintf("TASK#%s", id)
+	sk := "METADATA"
+
+	_, err := r.client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+		TableName: aws.String(r.tableName),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: pk},
+			"SK": &types.AttributeValueMemberS{Value: sk},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete task: %w", err)
+	}
+
+	return nil
+}

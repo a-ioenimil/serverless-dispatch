@@ -45,3 +45,7 @@ export async function updateTask(
   const parsed = parseApiBody<Task>(response.data)
   return parsed ?? response.data
 }
+
+export async function deleteTask(id: string): Promise<void> {
+  await api.delete(`/tasks/${id}`)
+}

@@ -3,6 +3,7 @@ import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { useNavigate } from '@tanstack/react-router'
+import Lottie from 'lottie-react'
 import { toast } from 'sonner'
 import {
   Check,
@@ -14,6 +15,7 @@ import {
   Plus,
   RefreshCcw,
   Timer,
+  Trash2,
   UserCircle,
 } from 'lucide-react'
 
@@ -39,8 +41,18 @@ import {
 } from '../ui/select'
 import { ScrollArea } from '../ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../ui/dialog'
 import { cn } from '../../lib/utils'
-import { createTask, listTasks, updateTask } from '../../lib/tasks'
+import { createTask, deleteTask, listTasks, updateTask } from '../../lib/tasks'
 import { listUsers } from '../../lib/users'
 import type { SubmitEvent } from 'react'
 import type { DragStart, DropResult } from '@hello-pangea/dnd'
@@ -104,6 +116,7 @@ export function TaskBoard() {
   const [priority, setPriority] = useState<TaskPriority>('MEDIUM')
   const [orderByStatus, setOrderByStatus] = useState(emptyOrder)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const [deleteAnimation, setDeleteAnimation] = useState<object | null>(null)
   const unassignedValue = 'UNASSIGNED'
 
   const tasksQuery = useQuery({
@@ -147,6 +160,13 @@ export function TaskBoard() {
     const found = usersByUsername.get(value)
     return found?.id ?? value
   }
+
+  useEffect(() => {
+    fetch('/assets/lottie_files/Delete%20message.json')
+      .then((response) => response.json())
+      .then((data: object) => setDeleteAnimation(data))
+      .catch(() => null)
+  }, [])
 
   useEffect(() => {
     if (!tasks.length) {
@@ -259,6 +279,37 @@ export function TaskBoard() {
         queryClient.setQueryData(['tasks'], context.previous)
       }
       toast.error('Task update failed. Please try again.')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteTask(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] })
+      const previous = queryClient.getQueryData<Array<Task>>(['tasks']) ?? []
+
+      queryClient.setQueryData<Array<Task>>(['tasks'], (current = []) =>
+        current.filter((task) => task.id !== id),
+      )
+      setOrderByStatus((prev) => ({
+        OPEN: prev.OPEN.filter((taskId) => taskId !== id),
+        IN_PROGRESS: prev.IN_PROGRESS.filter((taskId) => taskId !== id),
+        DONE: prev.DONE.filter((taskId) => taskId !== id),
+      }))
+
+      return { previous }
+    },
+    onError: (_error, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['tasks'], context.previous)
+      }
+      toast.error('Task delete failed. Please try again.')
+    },
+    onSuccess: () => {
+      toast.success('Task deleted')
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
@@ -792,6 +843,65 @@ export function TaskBoard() {
                                                 </SelectItem>
                                               </SelectContent>
                                             </Select>
+                                            <Dialog>
+                                              <DialogTrigger asChild>
+                                                <Button
+                                                  type="button"
+                                                  variant="destructive"
+                                                  className="ml-auto h-8 px-2 text-[10px] uppercase tracking-[0.12em]"
+                                                >
+                                                  <Trash2 className="h-3.5 w-3.5" />
+                                                </Button>
+                                              </DialogTrigger>
+                                              <DialogContent className="border-white/10 bg-black/95 text-amber-50">
+                                                <DialogHeader>
+                                                  <DialogTitle>
+                                                    Delete task
+                                                  </DialogTitle>
+                                                  <DialogDescription className="text-slate-200/60">
+                                                    This action cannot be
+                                                    undone.
+                                                  </DialogDescription>
+                                                </DialogHeader>
+                                                {deleteAnimation && (
+                                                  <div className="mx-auto w-40">
+                                                    <Lottie
+                                                      animationData={
+                                                        deleteAnimation
+                                                      }
+                                                      loop
+                                                    />
+                                                  </div>
+                                                )}
+                                                <DialogFooter>
+                                                  <DialogClose asChild>
+                                                    <Button
+                                                      type="button"
+                                                      variant="outline"
+                                                    >
+                                                      Cancel
+                                                    </Button>
+                                                  </DialogClose>
+                                                  <DialogClose asChild>
+                                                    <Button
+                                                      type="button"
+                                                      variant="destructive"
+                                                      onClick={() => {
+                                                        if (
+                                                          deleteMutation.isPending
+                                                        )
+                                                          return
+                                                        deleteMutation.mutate(
+                                                          task.id,
+                                                        )
+                                                      }}
+                                                    >
+                                                      Delete
+                                                    </Button>
+                                                  </DialogClose>
+                                                </DialogFooter>
+                                              </DialogContent>
+                                            </Dialog>
                                           </div>
                                         )}
                                       </div>

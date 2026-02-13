@@ -69,6 +69,9 @@ module "api_gateway" {
   update_task_function_name = module.compute.update_task_function_name
   update_task_invoke_arn    = module.compute.update_task_invoke_arn
 
+  delete_task_function_name = module.compute.delete_task_function_name
+  delete_task_invoke_arn    = module.compute.delete_task_invoke_arn
+
   list_users_function_name = module.compute.list_users_function_name
   list_users_invoke_arn    = module.compute.list_users_invoke_arn
 }

@@ -21,6 +21,14 @@ output "update_task_function_name" {
   value = module.api_update_task.lambda_function_name
 }
 
+output "delete_task_invoke_arn" {
+  value = module.api_delete_task.lambda_function_invoke_arn
+}
+
+output "delete_task_function_name" {
+  value = module.api_delete_task.lambda_function_name
+}
+
 output "list_users_invoke_arn" {
   value = module.api_list_users.lambda_function_invoke_arn
 }

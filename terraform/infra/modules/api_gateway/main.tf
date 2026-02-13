@@ -107,6 +107,32 @@ resource "aws_lambda_permission" "update_task" {
 }
 
 # -----------------------------------------------------------------------------
+# Route: Delete Task (DELETE /tasks/{taskId})
+# -----------------------------------------------------------------------------
+resource "aws_apigatewayv2_integration" "delete_task" {
+  api_id                 = aws_apigatewayv2_api.http_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = var.delete_task_invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "delete_task" {
+  api_id             = aws_apigatewayv2_api.http_api.id
+  route_key          = "DELETE /tasks/{taskId}"
+  target             = "integrations/${aws_apigatewayv2_integration.delete_task.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+}
+
+resource "aws_lambda_permission" "delete_task" {
+  statement_id  = "AllowExecutionFromAPIGateway-DeleteTask"
+  action        = "lambda:InvokeFunction"
+  function_name = var.delete_task_function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/DELETE/tasks/*"
+}
+
+# -----------------------------------------------------------------------------
 # Route: Get Users (GET /users)
 # -----------------------------------------------------------------------------
 resource "aws_apigatewayv2_integration" "get_users" {
