@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/a-ioenimil/serverless-dispatch/functions/internals/common/logger"
 	"github.com/a-ioenimil/serverless-dispatch/functions/internals/identity/infrastructure/dynamodb"
@@ -78,7 +80,7 @@ func handler(ctx context.Context, event events.CognitoEventUserPoolsPostConfirma
 			return event, nil
 		}
 
-		if err := subscribeUserToNotifications(ctx, email); err != nil {
+		if err := subscribeUserToNotifications(ctx, email, sub, username); err != nil {
 			slog.Error("Failed to subscribe user to notifications", "error", err, "email", email)
 			return event, err
 		}
@@ -87,9 +89,21 @@ func handler(ctx context.Context, event events.CognitoEventUserPoolsPostConfirma
 	return event, nil
 }
 
-func subscribeUserToNotifications(ctx context.Context, email string) error {
+func subscribeUserToNotifications(ctx context.Context, email, sub, username string) error {
+	recipientFilterValues := make([]string, 0, 3)
+	for _, value := range []string{email, sub, username} {
+		trimmed := strings.TrimSpace(value)
+		if trimmed != "" {
+			recipientFilterValues = append(recipientFilterValues, trimmed)
+		}
+	}
+
+	if len(recipientFilterValues) == 0 {
+		return fmt.Errorf("at least one recipient filter value is required")
+	}
+
 	filterPolicy, err := json.Marshal(map[string][]string{
-		"recipient": {email},
+		"recipient": recipientFilterValues,
 		"channel":   {"email"},
 	})
 	if err != nil {

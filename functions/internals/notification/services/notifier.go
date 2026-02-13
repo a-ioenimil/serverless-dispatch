@@ -156,13 +156,17 @@ func (s *TaskNotifierService) resolveRecipient(ctx context.Context, usernameOrEm
 	}
 
 	if s.resolver == nil {
-		return ""
+		return usernameOrEmail
 	}
 
 	email, err := s.resolver.ResolveUserEmailByUsername(ctx, usernameOrEmail)
 	if err != nil {
 		slog.Error("failed to resolve user email", "username", usernameOrEmail, "error", err)
-		return ""
+		return usernameOrEmail
+	}
+
+	if strings.TrimSpace(email) == "" {
+		return usernameOrEmail
 	}
 
 	return email
