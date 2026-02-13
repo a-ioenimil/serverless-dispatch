@@ -75,3 +75,15 @@ module "api_gateway" {
   list_users_function_name = module.compute.list_users_function_name
   list_users_invoke_arn    = module.compute.list_users_invoke_arn
 }
+
+# 5. Amplify Frontend Hosting Module
+module "amplify" {
+  source = "./modules/amplify"
+
+  app_name            = var.project_name
+  repository_url      = "https://github.com/${var.github_repo}"
+  api_base_url        = module.api_gateway.api_endpoint
+  aws_region          = var.region
+  user_pool_id        = module.auth.user_pool_id
+  user_pool_client_id = module.auth.user_pool_client_id
+}
