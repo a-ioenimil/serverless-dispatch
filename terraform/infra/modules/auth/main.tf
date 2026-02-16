@@ -21,6 +21,7 @@ resource "aws_cognito_user_pool" "main" {
   lambda_config {
     pre_sign_up       = var.pre_sign_up_lambda_arn
     post_confirmation = var.post_confirmation_lambda_arn
+    
   }
 }
 

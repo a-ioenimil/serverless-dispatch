@@ -57,8 +57,10 @@ func init() {
 }
 
 // Handler uses the Internal Service to process events
-func handler(ctx context.Context, event events.DynamoDBEvent) error {
+func handler(ctx context.Context, event events.DynamoDBEvent) (events.DynamoDBEventResponse, error) {
 	slog.Info("Processing Dynamodb Stream", "count", len(event.Records))
+
+	failures := make([]events.DynamoDBBatchItemFailure, 0)
 
 	for _, record := range event.Records {
 		// Only interest in Task Metadata changes (PK starts with TASK#)
@@ -74,9 +76,13 @@ func handler(ctx context.Context, event events.DynamoDBEvent) error {
 		}
 
 		slog.Info("Processing Task Event for Service", "event_id", record.EventID)
-		notifierService.ProcessTaskStream(ctx, record)
+		if err := notifierService.ProcessTaskStream(ctx, record); err != nil {
+			slog.Error("Failed to process task stream record", "event_id", record.EventID, "error", err)
+			failures = append(failures, events.DynamoDBBatchItemFailure{ItemIdentifier: record.EventID})
+		}
 	}
-	return nil
+
+	return events.DynamoDBEventResponse{BatchItemFailures: failures}, nil
 }
 
 func main() {
