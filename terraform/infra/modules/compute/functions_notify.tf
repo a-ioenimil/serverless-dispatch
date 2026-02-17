@@ -1,3 +1,8 @@
+resource "aws_sns_topic" "notifications" {
+  name = "${var.project_name}-notifications"
+}
+
+
 module "async_notifier" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "7.2.0"
@@ -61,9 +66,6 @@ module "async_notifier" {
   }
 }
 
-resource "aws_sns_topic" "notifications" {
-  name = "${var.project_name}-notifications"
-}
 
 resource "aws_lambda_event_source_mapping" "dynamodb_stream" {
   event_source_arn               = var.dynamodb_table_stream_arn

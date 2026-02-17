@@ -34,20 +34,14 @@ func (s *TaskNotifierService) ProcessTaskStream(ctx context.Context, record even
 }
 
 func (s *TaskNotifierService) handleTaskCreated(ctx context.Context, newImage map[string]events.DynamoDBAttributeValue) error {
-	assignee := extractString(newImage, "AssigneeID")
-	// Safe fallback to lowercase
-	if assignee == "" {
-		assignee = extractString(newImage, "assignee_id")
-	}
+	assignee := extractTaskString(newImage, "AssigneeID", "assignee_id")
 
 	if assignee == "" {
+		slog.Info("Skipping create notification: no assignee found in stream image")
 		return nil
 	}
 
-	title := extractString(newImage, "Title")
-	if title == "" {
-		title = extractString(newImage, "title")
-	}
+	title := extractTaskString(newImage, "Title", "title")
 
 	recipient := s.resolveRecipient(ctx, assignee)
 	if recipient == "" {
@@ -64,33 +58,19 @@ func (s *TaskNotifierService) handleTaskCreated(ctx context.Context, newImage ma
 }
 
 func (s *TaskNotifierService) handleTaskUpdated(ctx context.Context, oldImage, newImage map[string]events.DynamoDBAttributeValue) error {
-	title := extractString(newImage, "Title")
-	if title == "" {
-		title = extractString(newImage, "title")
-	}
+	title := extractTaskString(newImage, "Title", "title")
 
-	oldStatus := extractString(oldImage, "Status")
-	if oldStatus == "" {
-		oldStatus = extractString(oldImage, "status")
-	}
+	oldStatus := extractTaskString(oldImage, "Status", "status")
 
-	newStatus := extractString(newImage, "Status")
-	if newStatus == "" {
-		newStatus = extractString(newImage, "status")
-	}
-	oldAssignee := extractString(oldImage, "AssigneeID")
-	if oldAssignee == "" {
-		oldAssignee = extractString(oldImage, "assignee_id")
-	}
-	newAssignee := extractString(newImage, "AssigneeID")
-	if newAssignee == "" {
-		newAssignee = extractString(newImage, "assignee_id")
-	}
+	newStatus := extractTaskString(newImage, "Status", "status")
+	oldAssignee := extractTaskString(oldImage, "AssigneeID", "assignee_id")
+	newAssignee := extractTaskString(newImage, "AssigneeID", "assignee_id")
 
 	statusChanged := oldStatus != newStatus
 	assigneeChanged := oldAssignee != newAssignee
 
 	if !statusChanged && !assigneeChanged {
+		slog.Info("Skipping update notification: no status/assignee change detected")
 		return nil
 	}
 
@@ -210,6 +190,28 @@ func (s *TaskNotifierService) adminRecipients(ctx context.Context) []string {
 	}
 
 	return emails
+}
+
+func extractTaskString(image map[string]events.DynamoDBAttributeValue, keys ...string) string {
+	for _, key := range keys {
+		if value := extractString(image, key); value != "" {
+			return value
+		}
+	}
+
+	data, ok := image["Data"]
+	if !ok || data.DataType() != events.DataTypeMap {
+		return ""
+	}
+
+	nested := data.Map()
+	for _, key := range keys {
+		if value := extractString(nested, key); value != "" {
+			return value
+		}
+	}
+
+	return ""
 }
 
 // Helper to handle DynamoDB Map values robustly
